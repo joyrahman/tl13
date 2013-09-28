@@ -116,6 +116,51 @@ object Parser {
   /** Represents a readInt */
   case class ReadInt extends Node
 
+  /** Parses a [[Decls]]
+    *
+    * @param tokens Stream of tokens to parse
+    * @return A [[Decls]] and the remaining tokens to parse
+    * @throws [[ParseError]]
+    */
+  def parseDeclarations(tokens: Traversable[Token]): (Decls, Traversable[Token]) = {
+    def aux(res: Vector[Decl], tokens: Traversable[Token]): Pair[Vector[Decl],Traversable[Token]] = {
+      if (tokens.isEmpty || tokens.head.value != "var") {
+        (res, tokens)
+      } else {
+        var tks = tokens.tail
+
+        if (tks.isEmpty)
+          throw new EOSError("<ident>", tokens.last)
+        if (!tks.head.value.matches("[A-Z][A-Z0-9]*"))
+          throw new ParseError("<ident>", tks.head)
+        val value = tks.head.value
+        tks = tks. tail
+
+        if (tks.isEmpty)
+          throw new EOSError("as", tokens.last)
+        if (tks.head.value != "as")
+          throw new ParseError("as", tks.head)
+        tks = tks.tail
+
+        if (tks.isEmpty)
+          throw new EOSError("int or bool", tokens.last)
+        if (!tks.head.value.matches("int|bool"))
+          throw new ParseError("int or bool", tks.head)
+        val typ = tks.head.value
+        tks = tks.tail
+
+        if (tks.isEmpty)
+          throw new EOSError(";", tokens.last)
+        if (tks.head.value != ";")
+          throw new ParseError(";", tks.head)
+
+        aux(res :+ Decl(value, typ), tks.tail)
+      }
+    }
+    val (res, auxTokens) = aux(Vector[Decl](), tokens)
+    (Decls(res:_*), auxTokens)
+  }
+
   /** Parses a [[StatementSeq]]
     *
     * @param tokens Stream of tokens to parse

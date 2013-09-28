@@ -8,6 +8,30 @@ import UnitTest._
 /** [[Parser]] unit tests */
 object ParserTests {
 
+  /** [[Parser.parseDeclarations]] unit tests */
+  val parseDeclsTests =
+    TestGroup("parseDeclarations",
+              TestGroup("good",
+                        mkParseDeclsSuccess("", Decls(), List(Token("",0,0))),
+                        mkParseDeclsSuccess("1", Decls(), List(Token("1",0,0))),
+                        mkParseDeclsSuccess("var A as int ;", Decls(Decl("A", "int"))),
+                        mkParseDeclsSuccess("var A as int ; var B as bool ;",
+                                            Decls(Decl("A", "int"), Decl("B", "bool"))),
+                        mkParseDeclsSuccess("var A as int ; begin",
+                                            Decls(Decl("A", "int")), List(Token("begin",0,0)))
+                      ),
+              TestGroup("bad",
+                        mkParseDeclsFailure[ParseError]("var as int ;"),
+                        mkParseDeclsFailure[ParseError]("var A int ;"),
+                        mkParseDeclsFailure[ParseError]("var A as ;"),
+                        mkParseDeclsFailure[ParseError]("var A as int 1"),
+                        mkParseDeclsFailure[EOSError]("var A as int"),
+                        mkParseDeclsFailure[EOSError]("var A as"),
+                        mkParseDeclsFailure[EOSError]("var A"),
+                        mkParseDeclsFailure[EOSError]("var")
+                      )
+            )
+
   /** [[Parser.parseStatementSeq]] unit tests */
   val parseStmtSeqTests =
     TestGroup("parseStatementSeq",
@@ -210,6 +234,7 @@ object ParserTests {
   /** All Parser unit tests */
   val tests =
     TestGroup("Parser",
+              parseDeclsTests,
               parseStmtSeqTests,
               parseStmtTests,
               parseAsgnTests,
@@ -230,6 +255,9 @@ object ParserTests {
     input: String, expected: Node, remaining: List[Token] = List())
   : Test =
     Test(input, () => assertEqual(parse(input), (expected, remaining)))
+
+  private def mkParseDeclsSuccess(input: String, expected: Node, remaining: List[Token] = List()): Test =
+    mkParseSuccess(parseDeclarations, input, expected, remaining)
 
   private def mkParseStmtSeqSuccess(input: String, expected: Node, remaining: List[Token] = List()): Test =
     mkParseSuccess(parseStatementSeq, input, expected, remaining)
@@ -264,6 +292,9 @@ object ParserTests {
     parse: Traversable[Token] => (Node, Traversable[Token]), input: String)(implicit m: Manifest[A])
   : Test =
     Test(input, () => assertThrows[A](parse(input)))
+
+  private def mkParseDeclsFailure[A <: ParseError](input: String) (implicit m: Manifest[A]) =
+    mkParseFailure[A](parseDeclarations, input)
 
   private def mkParseStmtSeqFailure[A <: ParseError](input: String) (implicit m: Manifest[A]) =
     mkParseFailure[A](parseStatementSeq, input)
