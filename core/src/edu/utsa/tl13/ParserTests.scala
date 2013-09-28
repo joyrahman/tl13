@@ -8,6 +8,17 @@ import UnitTest._
 /** [[Parser]] unit tests */
 object ParserTests {
 
+  /** parseWriteInt unit tests */
+  val parseWriteIntTests =
+    TestGroup("parseWriteInt",
+              TestGroup("good",
+                        mkParseWriteIntSuccess("writeInt 1 + 2", WriteInt(Op("+", Num("1"), Num("2"))))
+                      ),
+              TestGroup("bad",
+                        mkParseWriteIntFailure[EOSError]("writeInt")
+                      )
+            )
+
   /** parseExpression unit tests */
   val parseExprTests =
     TestGroup("parseExpression",
@@ -127,6 +138,7 @@ object ParserTests {
   /** All Parser unit tests */
   val tests =
     TestGroup("Parser",
+              parseWriteIntTests,
               parseExprTests,
               parseSimpleExprTests,
               parseTermTests,
@@ -142,6 +154,9 @@ object ParserTests {
     input: String, expected: Node, remaining: List[Token] = List())
   : Test =
     Test(input, () => assertEqual(parse(input), (expected, remaining)))
+
+  private def mkParseWriteIntSuccess(input: String, expected: Node, remaining: List[Token] = List()): Test =
+    mkParseSuccess(parseWriteInt, input, expected, remaining)
 
   private def mkParseExprSuccess(input: String, expected: Node, remaining: List[Token] = List()): Test =
     mkParseSuccess(parseExpression, input, expected, remaining)
@@ -161,6 +176,9 @@ object ParserTests {
     parse: Traversable[Token] => (Node, Traversable[Token]), input: String)(implicit m: Manifest[A])
   : Test =
     Test(input, () => assertThrows[A](parse(input)))
+
+  private def mkParseWriteIntFailure[A <: ParseError](input: String) (implicit m: Manifest[A]) =
+    mkParseFailure[A](parseWriteInt, input)
 
   private def mkParseExprFailure[A <: ParseError](input: String) (implicit m: Manifest[A]) =
     mkParseFailure[A](parseExpression, input)
