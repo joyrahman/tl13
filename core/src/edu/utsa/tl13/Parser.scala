@@ -111,8 +111,10 @@ object Parser {
     * @param ident The identifier being assigned
     * @param expr Either an expression to assign or readInt
     */
-  case class Assignment(ident: String, expr: Option[Expr]) extends Statement
+  case class Assignment(ident: String, expr: Either[Expr, ReadInt]) extends Statement
 
+  /** Represents a readInt */
+  case class ReadInt extends Node
   /** Parses a writeInt
     *
     * @param tokens Stream of tokens to parse
