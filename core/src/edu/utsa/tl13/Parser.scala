@@ -119,6 +119,7 @@ object Parser {
     *
     * @param tokens Stream of tokens to parse
     * @return A [[WriteInt]] and the remaining tokens to parse
+    * @throws [[ParseError]]
     */
   def parseWriteInt(tokens: Traversable[Token]): (WriteInt, Traversable[Token]) = {
     assert(tokens.head.value == "writeInt")

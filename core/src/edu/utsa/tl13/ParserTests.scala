@@ -8,7 +8,7 @@ import UnitTest._
 /** [[Parser]] unit tests */
 object ParserTests {
 
-  /** parseWriteInt unit tests */
+  /** [[Parser.parseWriteInt]] unit tests */
   val parseWriteIntTests =
     TestGroup("parseWriteInt",
               TestGroup("good",
@@ -19,7 +19,7 @@ object ParserTests {
                       )
             )
 
-  /** parseExpression unit tests */
+  /** [[Parser.parseExpression]] unit tests */
   val parseExprTests =
     TestGroup("parseExpression",
               TestGroup("good",
@@ -67,7 +67,7 @@ object ParserTests {
                       )
             )
 
-  /** parseSimpleExpression unit tests */
+  /** [[Parser.parseSimpleExpression]] unit tests */
   val parseSimpleExprTests =
     TestGroup("parseSimpleExpression",
               TestGroup("good",
@@ -84,7 +84,7 @@ object ParserTests {
                       )
             )
 
-  /** parseTerm unit tests */
+  /** [[Parser.parseTerm]] unit tests */
   val parseTermTests =
     TestGroup("parseTerm",
               TestGroup("good",
@@ -99,7 +99,7 @@ object ParserTests {
                       )
             )
 
-  /** parseFactor unit tests */
+  /** [[Parser.parseFactor]] unit tests */
   val parseFactorTests =
     TestGroup("parseFactor",
               TestGroup("num",
