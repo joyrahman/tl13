@@ -115,6 +115,155 @@ object Parser {
 
   /** Represents a readInt */
   case class ReadInt extends Node
+
+  /** Parses a [[StatementSeq]]
+    *
+    * @param tokens Stream of tokens to parse
+    * @return A [[StatementSeq]] and the remaining tokens to parse
+    * @throws [[ParseError]]
+    */
+  def parseStatementSeq(tokens: Traversable[Token]): (StatementSeq, Traversable[Token]) = {
+    def aux(res: Vector[Statement], tokens: Traversable[Token]): Pair[Vector[Statement],Traversable[Token]] = {
+      tokens.toSeq match {
+        case Seq() => (res, tokens)
+        case _     =>
+          try {
+            val (stmt, stmtTokens) = parseStatement(tokens)
+            stmtTokens.toSeq match {
+              case Seq()                        => throw new EOSError(";", tokens.last)
+              case Seq(x, _*) if x.value != ";" => throw new ParseError(";", x)
+              case Seq(_, rest @ _*)            => aux(res :+ stmt, rest)
+            }
+          } catch {
+            case e: ParseError => (res, tokens)
+          }
+      }
+    }
+    val (stmts, auxTokens) = aux(Vector[Statement](), tokens)
+    (StatementSeq(stmts:_*), auxTokens)
+  }
+
+  /** Parses a [[Statement]]
+    *
+    * @param tokens Stream of tokens to parse
+    * @return A [[Statement]] and the remaining tokens to parse
+    * @throws [[ParseError]]
+    */
+  def parseStatement(tokens: Traversable[Token]): (Statement, Traversable[Token]) = {
+    tokens.head.value match {
+      case "if"                             => parseIfStatement(tokens)
+      case "while"                          => parseWhileStatement(tokens)
+      case "writeInt"                       => parseWriteInt(tokens)
+      case v if v.matches("[A-Z][A-Z0-9]*") => parseAssignment(tokens)
+      case _                                =>
+        throw new ParseError("if, while, writeInt, or assignment", tokens.head)
+    }
+  }
+
+  /** Parses an [[Assignment]]
+    *
+    * @param tokens Stream of tokens to parse
+    * @return An [[Assignment]] and the remaining tokens to parse
+    * @throws [[ParseError]]
+    */
+  def parseAssignment(tokens: Traversable[Token]): (Assignment, Traversable[Token]) = {
+    tokens.toSeq match {
+      case Seq(ident, _*) if !ident.value.matches("[A-Z][A-Z0-9]*") =>
+        throw new ParseError("<ident>", ident)
+      case Seq(_)                                                   =>
+        throw new EOSError(":=", tokens.last)
+      case Seq(_, e, _*) if e.value != ":="                         =>
+        throw new ParseError(":=", e)
+      case Seq(_, _)                                                =>
+        throw new EOSError("<expression> or readInt", tokens.last)
+      case Seq(ident, _, x, rest @ _*) if x.value == "readInt"      =>
+        (Assignment(ident.value, Right(ReadInt())), rest)
+      case Seq(ident, _, rest @ _*)                                 => {
+        val (expr, tokens) = parseExpression(rest)
+        (Assignment(ident.value, Left(expr)), tokens)
+      }
+    }
+  }
+
+  /** Parses an [[If]] statement
+    *
+    * @param tokens Stream of tokens to parse
+    * @return An [[If]] and the remaining tokens to parse
+    * @throws [[ParseError]]
+    */
+  def parseIfStatement(tokens: Traversable[Token]): (If, Traversable[Token]) = {
+    assert(tokens.head.value == "if")
+
+    if (tokens.tail.isEmpty)
+      throw new EOSError("<expression>", tokens.head)
+
+    val (expr, exprTokens) = parseExpression(tokens.tail)
+    if (exprTokens.isEmpty)
+      throw new EOSError("then", tokens.last)
+    if (exprTokens.head.value != "then")
+      throw new ParseError("then", exprTokens.head)
+
+    val (stmts, stmtsTokens) = parseStatementSeq(exprTokens.tail)
+
+    val (els, elsTokens) =
+      stmtsTokens.toSeq match {
+        case Seq()                           => throw new EOSError("else or end", tokens.last)
+        case Seq(x, _*) if x.value == "else" => {
+          val (ss, tks) = parseStatementSeq(stmtsTokens.tail)
+          (Some(ss), tks)
+        }
+        case Seq(x, _*) if x.value == "end"  => (None, stmtsTokens)
+        case Seq(x, _*)                      => throw new ParseError("else or end", x)
+      }
+
+    if (elsTokens.isEmpty)
+      throw new EOSError("end", tokens.last)
+    if (elsTokens.head.value != "end")
+      throw new ParseError("end", elsTokens.head)
+
+    (If(expr, stmts, els), elsTokens.tail)
+  }
+
+  /** Parses an else clause
+    *
+    * @param tokens Stream of tokens to parse
+    * @return A [[StatementSeq]] and the remaining tokens to parse
+    * @throws [[ParseError]]
+    */
+  def parseElseClause(tokens: Traversable[Token]): (StatementSeq, Traversable[Token]) = {
+    assert(tokens.head.value == "else")
+    if (tokens.tail.isEmpty)
+      throw new EOSError("<statementSequence>", tokens.head)
+    parseStatementSeq(tokens.tail)
+  }
+
+  /** Parses a while statement
+    *
+    * @param tokens Stream of tokens to parse
+    * @return A [[While]] and the remaining tokens to parse
+    * @throws [[ParseError]]
+    */
+  def parseWhileStatement(tokens: Traversable[Token]): (While, Traversable[Token]) = {
+    assert(tokens.head.value == "while")
+
+    if (tokens.tail.isEmpty)
+      throw new EOSError("<expression>", tokens.head)
+
+    val (expr, exprTokens) = parseExpression(tokens.tail)
+    if (exprTokens.isEmpty)
+      throw new EOSError("do", tokens.last)
+    if (exprTokens.head.value != "do")
+      throw new ParseError("do", exprTokens.head)
+
+    val (stmts, stmtsTokens) = parseStatementSeq(exprTokens.tail)
+    if (stmtsTokens.isEmpty)
+      throw new EOSError("end", exprTokens.last)
+    if (stmtsTokens.head.value != "end")
+      throw new ParseError("end", stmtsTokens.head)
+
+    (While(expr, stmts), stmtsTokens.tail)
+  }
+
   /** Parses a writeInt
     *
     * @param tokens Stream of tokens to parse

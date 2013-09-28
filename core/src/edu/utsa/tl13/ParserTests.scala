@@ -8,6 +8,78 @@ import UnitTest._
 /** [[Parser]] unit tests */
 object ParserTests {
 
+  /** [[Parser.parseStatementSeq]] unit tests */
+  val parseStmtSeqTests =
+    TestGroup("parseStatementSeq",
+              TestGroup("good",
+                        mkParseStmtSeqSuccess("", StatementSeq(), List(Token("",0,0))),
+                        mkParseStmtSeqSuccess("writeInt 1 ;", StatementSeq(WriteInt(Num("1")))),
+                        mkParseStmtSeqSuccess("writeInt 1 ; writeInt 2 ;",
+                                              StatementSeq(WriteInt(Num("1")), WriteInt(Num("2")))),
+                        mkParseStmtSeqSuccess("writeInt 1 ; end",
+                                              StatementSeq(WriteInt(Num("1"))), List(Token("end",0,0))),
+                        mkParseStmtSeqSuccess("writeInt 1 ; writeInt 2 ; end",
+                                              StatementSeq(WriteInt(Num("1")), WriteInt(Num("2"))),
+                                              List(Token("end",0,0)))
+                      )
+            )
+
+  /** [[Parser.parseStatement]] unit tests */
+  val parseStmtTests =
+    TestGroup("parseStatement",
+              TestGroup("good",
+                        mkParseStmtSuccess("A := 1 + 2", Assignment("A", Left(Op("+", Num("1"), Num("2"))))),
+                        mkParseStmtSuccess("if 1 + 2 then end",
+                                           If(Op("+", Num("1"), Num("2")), StatementSeq(), None)),
+                        mkParseStmtSuccess("while 1 + 2 do end",
+                                           While(Op("+", Num("1"), Num("2")), StatementSeq())),
+                        mkParseStmtSuccess("writeInt 3", WriteInt(Num("3")))
+                      ),
+              TestGroup("bad",
+                        mkParseStmtFailure[ParseError]("*")
+                      )
+            )
+
+  /** [[Parser.parseAssignment]] unit tests */
+  val parseAsgnTests =
+    TestGroup("parseAssignment",
+              TestGroup("good",
+                        mkParseAsgnSuccess("A := readInt", Assignment("A", Right(ReadInt()))),
+                        mkParseAsgnSuccess("A := 1 + 2", Assignment("A", Left(Op("+", Num("1"), Num("2")))))
+                      ),
+              TestGroup("bad",
+                        mkParseAsgnFailure[ParseError]("A readInt"),
+                        mkParseAsgnFailure[ParseError]("A 1 + 2"),
+                        mkParseAsgnFailure[EOSError]("A :="),
+                        mkParseAsgnFailure[EOSError]("A")
+                      )
+            )
+
+  /** [[Parser.parseIfStatement]] unit tests */
+  val parseIfTests =
+    TestGroup("parseIfStatement",
+              TestGroup("good",
+                        mkParseIfSuccess("if 1 + 2 then writeInt 3 ; end",
+                                         If(Op("+", Num("1"), Num("2")),
+                                            StatementSeq(WriteInt(Num("3"))), None)),
+                        mkParseIfSuccess("if 1 + 2 then writeInt 3 ; else writeInt 4 ; end",
+                                         If(Op("+", Num("1"), Num("2")),
+                                            StatementSeq(WriteInt(Num("3"))),
+                                            Some(StatementSeq(WriteInt(Num("4"))))))
+                      ),
+              TestGroup("bad",
+                        mkParseIfFailure[ParseError]("if then writeInt 3 ; end"),
+                        mkParseIfFailure[ParseError]("if 1 + 2 then writeInt 3 ; 3 end"),
+                        mkParseIfFailure[ParseError]("if 1 + 2 + then writeInt 3 ; end"),
+                        mkParseIfFailure[EOSError]("if 1 + 2 then writeInt 3 ; else writeInt 4 ;"),
+                        mkParseIfFailure[EOSError]("if 1 + 2 then writeInt 3 ; else"),
+                        mkParseIfFailure[EOSError]("if 1 + 2 then writeInt 3 ;"),
+                        mkParseIfFailure[EOSError]("if 1 + 2 then"),
+                        mkParseIfFailure[EOSError]("if 1 + 2"),
+                        mkParseIfFailure[EOSError]("if")
+                      )
+            )
+
   /** [[Parser.parseWriteInt]] unit tests */
   val parseWriteIntTests =
     TestGroup("parseWriteInt",
@@ -138,6 +210,10 @@ object ParserTests {
   /** All Parser unit tests */
   val tests =
     TestGroup("Parser",
+              parseStmtSeqTests,
+              parseStmtTests,
+              parseAsgnTests,
+              parseIfTests,
               parseWriteIntTests,
               parseExprTests,
               parseSimpleExprTests,
@@ -154,6 +230,18 @@ object ParserTests {
     input: String, expected: Node, remaining: List[Token] = List())
   : Test =
     Test(input, () => assertEqual(parse(input), (expected, remaining)))
+
+  private def mkParseStmtSeqSuccess(input: String, expected: Node, remaining: List[Token] = List()): Test =
+    mkParseSuccess(parseStatementSeq, input, expected, remaining)
+
+  private def mkParseStmtSuccess(input: String, expected: Node, remaining: List[Token] = List()): Test =
+    mkParseSuccess(parseStatement, input, expected, remaining)
+
+  private def mkParseAsgnSuccess(input: String, expected: Node, remaining: List[Token] = List()): Test =
+    mkParseSuccess(parseAssignment, input, expected, remaining)
+
+  private def mkParseIfSuccess(input: String, expected: Node, remaining: List[Token] = List()): Test =
+    mkParseSuccess(parseIfStatement, input, expected, remaining)
 
   private def mkParseWriteIntSuccess(input: String, expected: Node, remaining: List[Token] = List()): Test =
     mkParseSuccess(parseWriteInt, input, expected, remaining)
@@ -176,6 +264,18 @@ object ParserTests {
     parse: Traversable[Token] => (Node, Traversable[Token]), input: String)(implicit m: Manifest[A])
   : Test =
     Test(input, () => assertThrows[A](parse(input)))
+
+  private def mkParseStmtSeqFailure[A <: ParseError](input: String) (implicit m: Manifest[A]) =
+    mkParseFailure[A](parseStatementSeq, input)
+
+  private def mkParseStmtFailure[A <: ParseError](input: String) (implicit m: Manifest[A]) =
+    mkParseFailure[A](parseStatement, input)
+
+  private def mkParseAsgnFailure[A <: ParseError](input: String) (implicit m: Manifest[A]) =
+    mkParseFailure[A](parseAssignment, input)
+
+  private def mkParseIfFailure[A <: ParseError](input: String) (implicit m: Manifest[A]) =
+    mkParseFailure[A](parseIfStatement, input)
 
   private def mkParseWriteIntFailure[A <: ParseError](input: String) (implicit m: Manifest[A]) =
     mkParseFailure[A](parseWriteInt, input)
