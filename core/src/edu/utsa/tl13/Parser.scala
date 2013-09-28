@@ -113,4 +113,88 @@ object Parser {
     */
   case class Assignment(ident: String, expr: Option[Expr]) extends Statement
 
+  /** Parses a writeInt
+    *
+    * @param tokens Stream of tokens to parse
+    * @return A [[WriteInt]] and the remaining tokens to parse
+    */
+  def parseWriteInt(tokens: Traversable[Token]): (WriteInt, Traversable[Token]) = {
+    if (tokens.tail.isEmpty) {
+      throw new EOSError("<expression>", tokens.head)
+    } else {
+      val (expr, exprTokens) = parseExpression(tokens.tail)
+      (WriteInt(expr), exprTokens)
+    }
+  }
+
+  private def parseExprAux(
+    tokens: Traversable[Token], pattern: String, expected: String,
+    parse: Traversable[Token] => (Expr, Traversable[Token]))
+  : (Expr, Traversable[Token]) = {
+    val (left, leftTokens) = parse(tokens)
+    leftTokens.toSeq match {
+      case Seq()                                     => (left, leftTokens)
+      case Seq(op, _*) if !op.value.matches(pattern) => (left, leftTokens)
+      case Seq(op)                                   => throw new EOSError(expected, op)
+      case Seq(op, rest @ _*)                        => {
+        val (right, righTokens) = parse(rest)
+        (Op(op.value, left, right), righTokens)
+      }
+    }
+  }
+
+  /** Parses an expresstion
+    *
+    * @param tokens The tokens to parse
+    * @return A parsed [[Expr]] and the rest of the [[Scanner.Token]] stream
+    * @throws [[ParseError]]
+    */
+  def parseExpression(tokens: Traversable[Token]): (Expr, Traversable[Token]) =
+    parseExprAux(tokens, "=|!=|<|>|<=|>=", "<simpleExpression>", parseSimpleExpression)
+
+  /** Parses a simpleExpression
+    *
+    * @param tokens The tokens to parse
+    * @return A parsed [[Expr]] and the rest of the [[Scanner.Token]] stream
+    * @throws [[ParseError]]
+    */
+  def parseSimpleExpression(tokens: Traversable[Token]): (Expr, Traversable[Token]) =
+    parseExprAux(tokens, "\\+|\\-", "<term>", parseTerm)
+
+  /** Parses a term
+    *
+    * @param tokens The tokens to parse
+    * @return A parsed [[Expr]] and the rest of the [[Scanner.Token]] stream
+    * @throws [[ParseError]]
+    */
+  def parseTerm(tokens: Traversable[Token]): (Expr, Traversable[Token]) =
+    parseExprAux(tokens, "\\*|div|mod", "<factor>", parseFactor)
+
+  /** Parses a factor
+    *
+    * @param tokens The tokens to parse
+    * @return A parsed [[Expr]] and the rest of the [[Scanner.Token]] stream
+    * @throws [[ParseError]]
+    */
+  def parseFactor(tokens: Traversable[Token]): (Expr, Traversable[Token]) = {
+    tokens.head.value match {
+      case v if v.matches("[1-9][0-9]*|0")  => (Num(v), tokens.tail)
+      case v if v.matches("false|true")     => (BoolLit(v), tokens.tail)
+      case v if v.matches("[A-Z][A-Z0-9]*") => (Ident(v), tokens.tail)
+      case "("                              => {
+        if (tokens.tail.isEmpty)
+          throw new EOSError("<expression>", tokens.head)
+
+        val (expr, exprTokens) = parseExpression(tokens.tail)
+        exprTokens.toSeq match {
+          case Seq()                        => throw new EOSError(")", tokens.last)
+          case Seq(x, _*) if x.value != ")" => throw new ParseError(")", x)
+          case Seq(x, rest @ _*)            => (expr, rest)
+        }
+      }
+      case _                                =>
+        throw new ParseError("num, false, true, identifier, or (", tokens.head)
+    }
+  }
+
 }
