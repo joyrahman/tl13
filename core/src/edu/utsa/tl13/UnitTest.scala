@@ -80,7 +80,7 @@ object UnitTest {
           if (e.getClass == clazz)
             Some(e)
           else
-            throw new AssertionFailedError("expected exception %s, got %s".format(clazz, e.getClass))
+            throw new AssertionFailedError("expected exception %s, got %s".format(clazz, e))
         }
       }
     caught match {
