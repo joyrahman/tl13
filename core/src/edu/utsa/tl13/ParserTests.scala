@@ -193,6 +193,3 @@ object ParserTests {
     mkParseFailure[A](parseFactor, input)
 
 }
-
-import ParserTests._
-simpleReport(tests.run)
