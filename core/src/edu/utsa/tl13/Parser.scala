@@ -121,6 +121,7 @@ object Parser {
     * @return A [[WriteInt]] and the remaining tokens to parse
     */
   def parseWriteInt(tokens: Traversable[Token]): (WriteInt, Traversable[Token]) = {
+    assert(tokens.head.value == "writeInt")
     if (tokens.tail.isEmpty) {
       throw new EOSError("<expression>", tokens.head)
     } else {
