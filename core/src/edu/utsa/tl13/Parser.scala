@@ -116,6 +116,35 @@ object Parser {
   /** Represents a readInt */
   case class ReadInt extends Node
 
+  /** Parses a [[Program]]
+    *
+    * @param tokens Stream of tokens to parse
+    * @return A [[Program]] and the remaining tokens to parse
+    * @throws [[ParseError]]
+    */
+  def parseProgram(tokens: Traversable[Token]): Program = {
+    if (tokens.isEmpty)
+      throw new EOSError("program", Token("", 1, 0))
+    if (tokens.head.value != "program")
+      throw new ParseError("program", tokens.head)
+
+    val (decls, declTokens) = parseDeclarations(tokens.tail)
+    if (declTokens.isEmpty)
+      throw new EOSError("begin", tokens.last)
+    if (declTokens.head.value != "begin")
+      throw new ParseError("begin", declTokens.head)
+
+    val (stmts, stmtsTokens) = parseStatementSeq(declTokens.tail)
+    if (stmtsTokens.isEmpty)
+      throw new EOSError("end", tokens.last)
+    if (stmtsTokens.head.value != "end")
+      throw new ParseError("end", stmtsTokens.head)
+    if (!stmtsTokens.tail.isEmpty)
+      throw new ParseError("<EOF>", stmtsTokens.tail.head)
+
+    Program(decls, stmts)
+  }
+
   /** Parses a [[Decls]]
     *
     * @param tokens Stream of tokens to parse
