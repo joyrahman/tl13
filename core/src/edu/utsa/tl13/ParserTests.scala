@@ -125,6 +125,26 @@ object ParserTests {
                       )
             )
 
+  /** [[Parser.parseWhileStatement]] unit tests */
+  val parseWhileTests =
+    TestGroup("parseWhileStatement",
+              TestGroup("good",
+                        mkParseWhileSuccess("while 1 + 2 do writeInt 3 ; end",
+                                            While(Op("+", Num("1"), Num("2")),
+                                                  StatementSeq(WriteInt(Num("3"))))),
+                        mkParseWhileSuccess("while 1 + 2 do end", While(Op("+", Num("1"), Num("2")),
+                                                                        StatementSeq()))
+                      ),
+              TestGroup("bad",
+                        mkParseWhileFailure[ParseError]("while do writeInt 1 ;"),
+                        mkParseWhileFailure[ParseError]("while 1 + 2 writeInt 3 ;"),
+                        mkParseWhileFailure[EOSError]("while 1 + 2 do writeInt 3 ;"),
+                        mkParseWhileFailure[EOSError]("while 1 + 2 do"),
+                        mkParseWhileFailure[EOSError]("while 1 + 2"),
+                        mkParseWhileFailure[EOSError]("while")
+                      )
+            )
+
   /** [[Parser.parseWriteInt]] unit tests */
   val parseWriteIntTests =
     TestGroup("parseWriteInt",
@@ -261,6 +281,7 @@ object ParserTests {
               parseStmtTests,
               parseAsgnTests,
               parseIfTests,
+              parseWhileTests,
               parseWriteIntTests,
               parseExprTests,
               parseSimpleExprTests,
@@ -295,6 +316,9 @@ object ParserTests {
 
   private def mkParseIfSuccess(input: String, expected: Node, remaining: List[Token] = List()): Test =
     mkParseSuccess(parseIfStatement, input, expected, remaining)
+
+  private def mkParseWhileSuccess(input: String, expected: Node, remaining: List[Token] = List()): Test =
+    mkParseSuccess(parseWhileStatement, input, expected, remaining)
 
   private def mkParseWriteIntSuccess(input: String, expected: Node, remaining: List[Token] = List()): Test =
     mkParseSuccess(parseWriteInt, input, expected, remaining)
@@ -335,6 +359,9 @@ object ParserTests {
 
   private def mkParseIfFailure[A <: ParseError](input: String) (implicit m: Manifest[A]) =
     mkParseFailure[A](parseIfStatement, input)
+
+  private def mkParseWhileFailure[A <: ParseError](input: String) (implicit m: Manifest[A]) =
+    mkParseFailure[A](parseWhileStatement, input)
 
   private def mkParseWriteIntFailure[A <: ParseError](input: String) (implicit m: Manifest[A]) =
     mkParseFailure[A](parseWriteInt, input)
