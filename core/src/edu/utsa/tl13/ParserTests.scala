@@ -125,6 +125,14 @@ object ParserTests {
                       )
             )
 
+  /** [[Parser.parseElseClause]] unit tests */
+  val parseElseTests =
+    TestGroup("parseElseClause",
+              TestGroup("good",
+                        mkParseElseSuccess("else writeInt 3 ;", StatementSeq(WriteInt(Num("3"))))),
+              TestGroup("bad",
+                        mkParseElseFailure[EOSError]("else")))
+
   /** [[Parser.parseWhileStatement]] unit tests */
   val parseWhileTests =
     TestGroup("parseWhileStatement",
@@ -281,6 +289,7 @@ object ParserTests {
               parseStmtTests,
               parseAsgnTests,
               parseIfTests,
+              parseElseTests,
               parseWhileTests,
               parseWriteIntTests,
               parseExprTests,
@@ -316,6 +325,9 @@ object ParserTests {
 
   private def mkParseIfSuccess(input: String, expected: Node, remaining: List[Token] = List()): Test =
     mkParseSuccess(parseIfStatement, input, expected, remaining)
+
+  private def mkParseElseSuccess(input: String, expected: Node, remaining: List[Token] = List()): Test =
+    mkParseSuccess(parseElseClause, input, expected, remaining)
 
   private def mkParseWhileSuccess(input: String, expected: Node, remaining: List[Token] = List()): Test =
     mkParseSuccess(parseWhileStatement, input, expected, remaining)
@@ -359,6 +371,9 @@ object ParserTests {
 
   private def mkParseIfFailure[A <: ParseError](input: String) (implicit m: Manifest[A]) =
     mkParseFailure[A](parseIfStatement, input)
+
+  private def mkParseElseFailure[A <: ParseError](input: String) (implicit m: Manifest[A]) =
+    mkParseFailure[A](parseElseClause, input)
 
   private def mkParseWhileFailure[A <: ParseError](input: String) (implicit m: Manifest[A]) =
     mkParseFailure[A](parseWhileStatement, input)
