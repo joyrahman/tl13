@@ -25,7 +25,20 @@ object Parser {
                                                 column=lastToken.column + lastToken.value.length + 1))
 
   /** Base class for every node in the AST */
-  abstract class Node
+  abstract class Node {
+    /** Calls a function on every [[Node]] and sub-node
+      *
+      * @param acc Initial value that is passed to each function
+      * @param f Function to call on each node. The function is passed a node and the current
+      *          accumulated state
+      * @return The accumulated state
+      */
+    def fold[A](acc: A)(f: (A, Node) => A): A
+    /** Returns the child nodes of this node */
+    def children: Traversable[Node]
+    /** Returns the "value" of the node, if not already provided by a node member */
+    def value: String
+  }
 
   /** Represents an expression. Can be a num, boollit, ident, or operation */
   abstract class Expr extends Node
@@ -37,19 +50,28 @@ object Parser {
     *
     * @param value The value of the number
     */
-  case class Num(value: String) extends Expr
+  case class Num(value: String) extends Expr {
+    def fold[A](acc: A)(f: (A, Node) => A): A = f(acc, this)
+    def children = Vector()
+  }
 
   /** Represents a boolean literal
     *
     * @param value true or false
     */
-  case class BoolLit(value: String) extends Expr
+  case class BoolLit(value: String) extends Expr {
+    def fold[A](acc: A)(f: (A, Node) => A): A = f(acc, this)
+    def children = Vector()
+  }
 
   /** Represents an identifier
     *
     * @param value The value of the identifier
     */
-  case class Ident(value: String) extends Expr
+  case class Ident(value: String) extends Expr {
+    def fold[A](acc: A)(f: (A, Node) => A): A = f(acc, this)
+    def children = Vector()
+  }
 
   /** Represents an operation
     *
@@ -57,46 +79,92 @@ object Parser {
     * @param left The left-hand side expression
     * @param right The right-hand side expresssion
     */
-  case class Op(value: String, left: Expr, right: Expr) extends Expr
+  case class Op(value: String, left: Expr, right: Expr) extends Expr {
+    def fold[A](acc: A)(f: (A, Node) => A): A = {
+      var res = f(acc, this)
+      res = left.fold(res)(f)
+      res = right.fold(res)(f)
+      res
+    }
+    def children = Vector(left, right)
+  }
 
   /** Represents a sequence of statements
     *
     * @param stmts The sequences
     */
-  case class StatementSeq(stmts: Statement*) extends Node
+  case class StatementSeq(stmts: Statement*) extends Node {
+    def fold[A](acc: A)(f: (A, Node) => A): A =
+      stmts.foldLeft( f(acc, this) ) { (a,n) => n.fold(a)(f) }
+    def children = stmts
+    def value = "stmt list"
+  }
 
   /** Represents a declaration
     *
     * @param value The value of the declaration
     * @param typ The type of the declaration
     */
-  case class Decl(value: String, typ: String) extends Node
+  case class Decl(value: String, typ: String) extends Node {
+    def fold[A](acc: A)(f: (A, Node) => A): A = f(acc, this)
+    def children = Vector()
+  }
 
   /** Represents several declarations
     *
     * @param decls The declarations
     */
-  case class Decls(decls: Decl*) extends Node
+  case class Decls(decls: Decl*) extends Node {
+    def fold[A](acc: A)(f: (A, Node) => A): A =
+      decls.foldLeft( f(acc, this) ) { (a,n) => n.fold(a)(f) }
+    def children = decls
+    def value = "decl list"
+  }
 
   /** Represents a program
     *
     * @param decls The program declarations
     * @param stmts The statements in the program
     */
-  case class Program(decls: Decls, stmts: StatementSeq) extends Node
+  case class Program(decls: Decls, stmts: StatementSeq) extends Node {
+    def fold[A](acc: A)(f: (A, Node) => A): A = {
+      var res = f(acc, this)
+      res = decls.fold(res)(f)
+      res = stmts.fold(res)(f)
+      res
+    }
+    def children = Vector(decls, stmts)
+    def value = "program"
+  }
 
   /** Represents a writeInt statement
     *
     * @param expr The expression to write
     */
-  case class WriteInt(expr: Expr) extends Statement
+  case class WriteInt(expr: Expr) extends Statement {
+    def fold[A](acc: A)(f: (A, Node) => A): A = {
+      val res = f(acc, this)
+      expr.fold(res)(f)
+    }
+    def children = Vector(expr)
+    def value = "writeInt"
+  }
 
   /** Represents a while statement
     *
     * @param expr The condition that must be true
     * @param stmts The statements to execute
     */
-  case class While(expr: Expr, stmts: StatementSeq) extends Statement
+  case class While(expr: Expr, stmts: StatementSeq) extends Statement {
+    def fold[A](acc: A)(f: (A, Node) => A): A = {
+      var res = f(acc, this)
+      res = expr.fold(res)(f)
+      res = stmts.fold(res)(f)
+      res
+    }
+    def children = Vector(expr, stmts)
+    def value = "while"
+  }
 
   /** Represents an if statement
     *
@@ -104,17 +172,48 @@ object Parser {
     * @param stmts The statements that are executed when true
     * @param els The statements executed when false
     */
-  case class If(expr: Expr, stmts: StatementSeq, els: Option[StatementSeq]) extends Statement
+  case class If(expr: Expr, stmts: StatementSeq, els: Option[StatementSeq]) extends Statement {
+    def fold[A](acc: A)(f: (A, Node) => A): A = {
+      var res = f(acc, this)
+      res = expr.fold(res)(f)
+      res = stmts.fold(res)(f)
+      res = if (els.isEmpty) res else els.get.fold(res)(f)
+      res
+    }
+    def children = {
+      var v = Vector[Node](expr, stmts)
+      if (els.isEmpty)
+        v
+      else
+        v :+ els.get
+    }
+    def value = "if"
+  }
 
   /** Represents an assignment
     *
     * @param ident The identifier being assigned
     * @param expr Either an expression to assign or readInt
     */
-  case class Assignment(ident: String, expr: Either[Expr, ReadInt]) extends Statement
+  case class Assignment(ident: String, expr: Either[Expr, ReadInt]) extends Statement {
+    def fold[A](acc: A)(f: (A, Node) => A): A = {
+      var res = f(acc, this)
+      res = expr match {
+        case Right(x) => x.fold(res)(f)
+        case Left(x)  => x.fold(res)(f)
+      }
+      res
+    }
+    def children = Vector(if (expr.isLeft) expr.left.get else expr.right.get)
+    def value = ":="
+  }
 
   /** Represents a readInt */
-  case class ReadInt extends Node
+  case class ReadInt extends Node {
+    def fold[A](acc: A)(f: (A, Node) => A): A = f(acc, this)
+    def children = Vector()
+    def value = "readInt"
+  }
 
   /** Parses a [[Program]]
     *
