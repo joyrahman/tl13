@@ -15,7 +15,7 @@ object ParserTests {
                         mkParseProgramSuccess("program begin end",
                                               Program(Decls(), StatementSeq())),
                         mkParseProgramSuccess("program var A as int ; begin writeInt 1 ; end",
-                                              Program(Decls(Decl("A", "int")),
+                                              Program(Decls(Decl("A", Type("int"))),
                                                       StatementSeq(WriteInt(Num("1")))))
                       ),
               TestGroup("bad",
@@ -35,11 +35,11 @@ object ParserTests {
               TestGroup("good",
                         mkParseDeclsSuccess("", Decls(), List(Token("",0,0))),
                         mkParseDeclsSuccess("1", Decls(), List(Token("1",0,0))),
-                        mkParseDeclsSuccess("var A as int ;", Decls(Decl("A", "int"))),
+                        mkParseDeclsSuccess("var A as int ;", Decls(Decl("A", Type("int")))),
                         mkParseDeclsSuccess("var A as int ; var B as bool ;",
-                                            Decls(Decl("A", "int"), Decl("B", "bool"))),
+                                            Decls(Decl("A", Type("int")), Decl("B", Type("bool")))),
                         mkParseDeclsSuccess("var A as int ; begin",
-                                            Decls(Decl("A", "int")), List(Token("begin",0,0)))
+                                            Decls(Decl("A", Type("int"))), List(Token("begin",0,0)))
                       ),
               TestGroup("bad",
                         mkParseDeclsFailure[ParseError]("var as int ;"),
@@ -76,7 +76,8 @@ object ParserTests {
   val parseStmtTests =
     TestGroup("parseStatement",
               TestGroup("good",
-                        mkParseStmtSuccess("A := 1 + 2", Assignment("A", Left(Op("+", Num("1"), Num("2"))))),
+                        mkParseStmtSuccess("A := 1 + 2",
+                                           Assignment(Ident("A"), Left(Op("+", Num("1"), Num("2"))))),
                         mkParseStmtSuccess("if 1 + 2 then end",
                                            If(Op("+", Num("1"), Num("2")), StatementSeq(), None)),
                         mkParseStmtSuccess("while 1 + 2 do end",
@@ -92,8 +93,8 @@ object ParserTests {
   val parseAsgnTests =
     TestGroup("parseAssignment",
               TestGroup("good",
-                        mkParseAsgnSuccess("A := readInt", Assignment("A", Right(ReadInt()))),
-                        mkParseAsgnSuccess("A := 1 + 2", Assignment("A", Left(Op("+", Num("1"), Num("2")))))
+                        mkParseAsgnSuccess("A := readInt", Assignment(Ident("A"), Right(ReadInt()))),
+                        mkParseAsgnSuccess("A := 1 + 2", Assignment(Ident("A"), Left(Op("+", Num("1"), Num("2")))))
                       ),
               TestGroup("bad",
                         mkParseAsgnFailure[ParseError]("A readInt"),

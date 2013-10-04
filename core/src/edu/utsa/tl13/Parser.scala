@@ -100,14 +100,26 @@ object Parser {
     def value = "stmt list"
   }
 
+  /** Represents a type
+    *
+    * @param value the type
+    */
+  case class Type(value: String) extends Node {
+    def fold[A](acc: A)(f: (A, Node) => A): A = f(acc, this)
+    def children = Vector()
+  }
+
   /** Represents a declaration
     *
     * @param value The value of the declaration
-    * @param typ The type of the declaration
+    * @param typ The [[Type]] of the declaration
     */
-  case class Decl(value: String, typ: String) extends Node {
-    def fold[A](acc: A)(f: (A, Node) => A): A = f(acc, this)
-    def children = Vector()
+  case class Decl(value: String, typ: Type) extends Node {
+    def fold[A](acc: A)(f: (A, Node) => A): A = {
+      var res = f(acc, this)
+      typ.fold(res)(f)
+    }
+    def children = Vector(typ)
   }
 
   /** Represents several declarations
@@ -195,16 +207,17 @@ object Parser {
     * @param ident The identifier being assigned
     * @param expr Either an expression to assign or readInt
     */
-  case class Assignment(ident: String, expr: Either[Expr, ReadInt]) extends Statement {
+  case class Assignment(ident: Ident, expr: Either[Expr, ReadInt]) extends Statement {
     def fold[A](acc: A)(f: (A, Node) => A): A = {
       var res = f(acc, this)
+      res = ident.fold(res)(f)
       res = expr match {
         case Right(x) => x.fold(res)(f)
         case Left(x)  => x.fold(res)(f)
       }
       res
     }
-    def children = Vector(if (expr.isLeft) expr.left.get else expr.right.get)
+    def children = Vector(ident, if (expr.isLeft) expr.left.get else expr.right.get)
     def value = ":="
   }
 
@@ -272,10 +285,8 @@ object Parser {
 
         if (tks.isEmpty)
           throw new EOSError("int or bool", tokens.last)
-        if (!tks.head.value.matches("int|bool"))
-          throw new ParseError("int or bool", tks.head)
-        val typ = tks.head.value
-        tks = tks.tail
+        val (typ, typTokens) = parseType(tks)
+        tks = typTokens
 
         if (tks.isEmpty)
           throw new EOSError(";", tokens.last)
@@ -289,7 +300,22 @@ object Parser {
     (Decls(res:_*), auxTokens)
   }
 
-  /** Parses a [[StatementSeq]]
+  /** Parses a [[Type]]
+    *
+    * @param tokens Stream of tokens to parse
+    * @return A [[Type]] and the remaining tokens to parse
+    * @throws [[ParseError]]
+    * @todo Unit Tests!
+    */
+  def parseType(tokens: Traversable[Token]): (Type, Traversable[Token]) = {
+    tokens.head.value match {
+      case "int"  => (Type("int"), tokens.tail)
+      case "bool" => (Type("bool"), tokens.tail)
+      case _      => throw new ParseError("int or bool", tokens.head)
+    }
+  }
+
+  /** parses a [[StatementSeq]]
     *
     * @param tokens Stream of tokens to parse
     * @return A [[StatementSeq]] and the remaining tokens to parse
@@ -350,10 +376,10 @@ object Parser {
       case Seq(_, _)                                                =>
         throw new EOSError("<expression> or readInt", tokens.last)
       case Seq(ident, _, x, rest @ _*) if x.value == "readInt"      =>
-        (Assignment(ident.value, Right(ReadInt())), rest)
+        (Assignment(Ident(ident.value), Right(ReadInt())), rest)
       case Seq(ident, _, rest @ _*)                                 => {
         val (expr, tokens) = parseExpression(rest)
-        (Assignment(ident.value, Left(expr)), tokens)
+        (Assignment(Ident(ident.value), Left(expr)), tokens)
       }
     }
   }
