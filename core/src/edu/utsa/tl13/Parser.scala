@@ -6,6 +6,8 @@ import Scanner._
 /** Parser module */
 object Parser {
 
+  type TokenStream = Traversable[Token]
+
   /** Represents an error encountered during parsing
     *
     * @param expected The expected token
@@ -234,7 +236,7 @@ object Parser {
     * @return A [[Program]] and the remaining tokens to parse
     * @throws [[ParseError]]
     */
-  def parseProgram(tokens: Traversable[Token]): Program = {
+  def parseProgram(tokens: TokenStream): Program = {
     if (tokens.isEmpty)
       throw new EOSError("program", Token("", 1, 0))
     if (tokens.head.value != "program")
@@ -263,8 +265,8 @@ object Parser {
     * @return A [[Decls]] and the remaining tokens to parse
     * @throws [[ParseError]]
     */
-  def parseDeclarations(tokens: Traversable[Token]): (Decls, Traversable[Token]) = {
-    def aux(res: Vector[Decl], tokens: Traversable[Token]): Pair[Vector[Decl],Traversable[Token]] = {
+  def parseDeclarations(tokens: TokenStream): (Decls, TokenStream) = {
+    def aux(res: Vector[Decl], tokens: TokenStream): Pair[Vector[Decl],TokenStream] = {
       if (tokens.isEmpty || tokens.head.value != "var") {
         (res, tokens)
       } else {
@@ -307,7 +309,7 @@ object Parser {
     * @throws [[ParseError]]
     * @todo Unit Tests!
     */
-  def parseType(tokens: Traversable[Token]): (Type, Traversable[Token]) = {
+  def parseType(tokens: TokenStream): (Type, TokenStream) = {
     tokens.head.value match {
       case "int"  => (Type("int"), tokens.tail)
       case "bool" => (Type("bool"), tokens.tail)
@@ -321,8 +323,8 @@ object Parser {
     * @return A [[StatementSeq]] and the remaining tokens to parse
     * @throws [[ParseError]]
     */
-  def parseStatementSeq(tokens: Traversable[Token]): (StatementSeq, Traversable[Token]) = {
-    def aux(res: Vector[Statement], tokens: Traversable[Token]): Pair[Vector[Statement],Traversable[Token]] = {
+  def parseStatementSeq(tokens: TokenStream): (StatementSeq, TokenStream) = {
+    def aux(res: Vector[Statement], tokens: TokenStream): Pair[Vector[Statement],TokenStream] = {
       tokens.toSeq match {
         case Seq() => (res, tokens)
         case _     =>
@@ -348,7 +350,7 @@ object Parser {
     * @return A [[Statement]] and the remaining tokens to parse
     * @throws [[ParseError]]
     */
-  def parseStatement(tokens: Traversable[Token]): (Statement, Traversable[Token]) = {
+  def parseStatement(tokens: TokenStream): (Statement, TokenStream) = {
     tokens.head.value match {
       case "if"                             => parseIfStatement(tokens)
       case "while"                          => parseWhileStatement(tokens)
@@ -365,7 +367,7 @@ object Parser {
     * @return An [[Assignment]] and the remaining tokens to parse
     * @throws [[ParseError]]
     */
-  def parseAssignment(tokens: Traversable[Token]): (Assignment, Traversable[Token]) = {
+  def parseAssignment(tokens: TokenStream): (Assignment, TokenStream) = {
     tokens.toSeq match {
       case Seq(ident, _*) if !ident.value.matches("[A-Z][A-Z0-9]*") =>
         throw new ParseError("<ident>", ident)
@@ -390,7 +392,7 @@ object Parser {
     * @return An [[If]] and the remaining tokens to parse
     * @throws [[ParseError]]
     */
-  def parseIfStatement(tokens: Traversable[Token]): (If, Traversable[Token]) = {
+  def parseIfStatement(tokens: TokenStream): (If, TokenStream) = {
     assert(tokens.head.value == "if")
 
     if (tokens.tail.isEmpty)
@@ -429,7 +431,7 @@ object Parser {
     * @return A [[StatementSeq]] and the remaining tokens to parse
     * @throws [[ParseError]]
     */
-  def parseElseClause(tokens: Traversable[Token]): (StatementSeq, Traversable[Token]) = {
+  def parseElseClause(tokens: TokenStream): (StatementSeq, TokenStream) = {
     assert(tokens.head.value == "else")
     if (tokens.tail.isEmpty)
       throw new EOSError("<statementSequence>", tokens.head)
@@ -442,7 +444,7 @@ object Parser {
     * @return A [[While]] and the remaining tokens to parse
     * @throws [[ParseError]]
     */
-  def parseWhileStatement(tokens: Traversable[Token]): (While, Traversable[Token]) = {
+  def parseWhileStatement(tokens: TokenStream): (While, TokenStream) = {
     assert(tokens.head.value == "while")
 
     if (tokens.tail.isEmpty)
@@ -469,7 +471,7 @@ object Parser {
     * @return A [[WriteInt]] and the remaining tokens to parse
     * @throws [[ParseError]]
     */
-  def parseWriteInt(tokens: Traversable[Token]): (WriteInt, Traversable[Token]) = {
+  def parseWriteInt(tokens: TokenStream): (WriteInt, TokenStream) = {
     assert(tokens.head.value == "writeInt")
     if (tokens.tail.isEmpty) {
       throw new EOSError("<expression>", tokens.head)
@@ -480,9 +482,9 @@ object Parser {
   }
 
   private def parseExprAux(
-    tokens: Traversable[Token], pattern: String, expected: String,
-    parse: Traversable[Token] => (Expr, Traversable[Token]))
-  : (Expr, Traversable[Token]) = {
+    tokens: TokenStream, pattern: String, expected: String,
+    parse: TokenStream => (Expr, TokenStream))
+  : (Expr, TokenStream) = {
     val (left, leftTokens) = parse(tokens)
     leftTokens.toSeq match {
       case Seq()                                     => (left, leftTokens)
@@ -501,7 +503,7 @@ object Parser {
     * @return A parsed [[Expr]] and the rest of the [[Scanner.Token]] stream
     * @throws [[ParseError]]
     */
-  def parseExpression(tokens: Traversable[Token]): (Expr, Traversable[Token]) =
+  def parseExpression(tokens: TokenStream): (Expr, TokenStream) =
     parseExprAux(tokens, "=|!=|<|>|<=|>=", "<simpleExpression>", parseSimpleExpression)
 
   /** Parses a simpleExpression
@@ -510,7 +512,7 @@ object Parser {
     * @return A parsed [[Expr]] and the rest of the [[Scanner.Token]] stream
     * @throws [[ParseError]]
     */
-  def parseSimpleExpression(tokens: Traversable[Token]): (Expr, Traversable[Token]) =
+  def parseSimpleExpression(tokens: TokenStream): (Expr, TokenStream) =
     parseExprAux(tokens, "\\+|\\-", "<term>", parseTerm)
 
   /** Parses a term
@@ -519,7 +521,7 @@ object Parser {
     * @return A parsed [[Expr]] and the rest of the [[Scanner.Token]] stream
     * @throws [[ParseError]]
     */
-  def parseTerm(tokens: Traversable[Token]): (Expr, Traversable[Token]) =
+  def parseTerm(tokens: TokenStream): (Expr, TokenStream) =
     parseExprAux(tokens, "\\*|div|mod", "<factor>", parseFactor)
 
   /** Parses a factor
@@ -528,7 +530,7 @@ object Parser {
     * @return A parsed [[Expr]] and the rest of the [[Scanner.Token]] stream
     * @throws [[ParseError]]
     */
-  def parseFactor(tokens: Traversable[Token]): (Expr, Traversable[Token]) = {
+  def parseFactor(tokens: TokenStream): (Expr, TokenStream) = {
     tokens.head.value match {
       case v if v.matches("[1-9][0-9]*|0")  => (Num(v), tokens.tail)
       case v if v.matches("false|true")     => (BoolLit(v), tokens.tail)
