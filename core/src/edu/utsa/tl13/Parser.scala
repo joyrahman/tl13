@@ -6,23 +6,24 @@ import Scanner._
 /** Parser module */
 object Parser {
 
+  /** Represents a stream of [[Token]]s */
   type TokenStream = Traversable[Token]
 
-  /** Represents an error encountered during parsing
-    *
-    * @param expected The expected token
-    * @param token The incorrect given token
+  /** Function which parses a [[TokenStream]] and returns an error or the
+    * result of the parse and remaining tokens
     */
-  class ParseError(msg: String) extends Exception(msg) {
-    def this(expected: String, token: Token) =
-      this("line: %d, column: %d: expected %s, got %s" .format(token.line, token.column, expected, token.value));
+  type Parser[A] = TokenStream => Either[ParseError, (A, TokenStream)]
+
+  /** Base class for parsing errors */
+  sealed abstract class ParseError {
+    def expected: Set[String]
   }
 
-  /** Represents a parse error where a token was expected, but none were available
-    *
-    * @param expected The expected token
-    */
-  class EOSError(expected: String) extends ParseError("expected: %s, got EOF".format(expected))
+  /** Represents an error where a token was encounted which wasn't expected */
+  case class BadMatchError(expected: Set[String], token: Token) extends ParseError
+
+  /** Represents an error where a [[Token]] was expected but none were available */
+  case class EOFError(expected: Set[String]) extends ParseError
 
   /** Base class for every node in the AST */
   abstract class Node {
@@ -212,9 +213,9 @@ object Parser {
       var res = f(acc, this)
       res = ident.fold(res)(f)
       res = expr match {
-        case Right(x) => x.fold(res)(f)
-        case Left(x)  => x.fold(res)(f)
-      }
+          case Right(x) => x.fold(res)(f)
+          case Left(x)  => x.fold(res)(f)
+        }
       res
     }
     def children = Vector(ident, if (expr.isLeft) expr.left.get else expr.right.get)
@@ -228,325 +229,211 @@ object Parser {
     def value = "readInt"
   }
 
-  /** Parses a [[Program]]
-    *
-    * @param tokens Stream of tokens to parse
-    * @return A [[Program]] and the remaining tokens to parse
-    * @throws [[ParseError]]
-    */
-  def parseProgram(tokens: TokenStream): Program = {
-    if (tokens.isEmpty)
-      throw new EOSError("program")
-    if (tokens.head.value != "program")
-      throw new ParseError("program", tokens.head)
+  /** [[Parser]] which parses a [[Program]] */
+  def parseProgram: Parser[Program] =
+    tokens => for {
+      p <- parseRegex("program")(tokens).right
+      d <- parseDeclarations(p._2).right
+      b <- parseRegex("begin")(d._2).right
+      s <- parseStatementSeq(b._2).right
+      e <- parseEnd(s._2).right
+      f <- parseEOF(e._2).right
+    } yield (Program(d._1, s._1), f._2)
 
-    val (decls, declTokens) = parseDeclarations(tokens.tail)
-    if (declTokens.isEmpty)
-      throw new EOSError("begin")
-    if (declTokens.head.value != "begin")
-      throw new ParseError("begin", declTokens.head)
+  /** [[Parser]] which parses a [[Decls]] */
+  def parseDeclarations: Parser[Decls] =
+    tokens => for {
+      d <- many(parseDeclaration)(tokens).right
+    } yield (Decls(d._1.toSeq:_*), d._2)
 
-    val (stmts, stmtsTokens) = parseStatementSeq(declTokens.tail)
-    if (stmtsTokens.isEmpty)
-      throw new EOSError("end")
-    if (stmtsTokens.head.value != "end")
-      throw new ParseError("end", stmtsTokens.head)
-    if (!stmtsTokens.tail.isEmpty)
-      throw new ParseError("<EOF>", stmtsTokens.tail.head)
+  /** [[Parser]] which parses a [[Type]] */
+  def parseType: Parser[Type] =
+    tokens => for {
+      t <- parseRegex("int|bool")(tokens).right
+    } yield (Type(t._1), t._2)
 
-    Program(decls, stmts)
-  }
+  /** [[Parser]] which parses a [[StatementSeq]] */
+  def parseStatementSeq: Parser[StatementSeq] =
+    tokens => for {
+      ss <- many(tokens => for {
+                   s <- parseStatement(tokens).right
+                   c <- parseSC(s._2).right
+                 } yield (s._1, c._2))(tokens).right
+    } yield (StatementSeq(ss._1.toSeq:_*), ss._2)
 
-  /** Parses a [[Decls]]
-    *
-    * @param tokens Stream of tokens to parse
-    * @return A [[Decls]] and the remaining tokens to parse
-    * @throws [[ParseError]]
-    */
-  def parseDeclarations(tokens: TokenStream): (Decls, TokenStream) = {
-    def aux(res: Vector[Decl], tokens: TokenStream): Pair[Vector[Decl],TokenStream] = {
-      if (tokens.isEmpty || tokens.head.value != "var") {
-        (res, tokens)
-      } else {
-        var tks = tokens.tail
+  /** [[Parser]] which parses a [[Statement]] */
+  def parseStatement: Parser[Statement] =
+    choice(parseAssignment, parseIfStatement, parseWhileStatement, parseWriteInt)
 
-        if (tks.isEmpty)
-          throw new EOSError("<ident>")
-        if (!tks.head.value.matches("[A-Z][A-Z0-9]*"))
-          throw new ParseError("<ident>", tks.head)
-        val value = tks.head.value
-        tks = tks. tail
+  /** [[Parser]] which parses an [[Assignment]] */
+  def parseAssignment: Parser[Assignment] =
+    tokens => for {
+      i <- parseIdent(tokens).right
+      a <- parseRegex(":=")(i._2).right
+      e <- choice(parseExpression, parseRegex("readInt"))(a._2).right
+    } yield (Assignment(i._1, if (e._1 == "readInt") Right(ReadInt()) else Left(e._1.asInstanceOf[Expr])), e._2)
 
-        if (tks.isEmpty)
-          throw new EOSError("as")
-        if (tks.head.value != "as")
-          throw new ParseError("as", tks.head)
-        tks = tks.tail
+  /** [[Parser]] which parses an [[If]] */
+  def parseIfStatement: Parser[If] =
+    tokens => for {
+      i <- parseRegex("if")(tokens).right
+      e <- parseExpression(i._2).right
+      t <- parseRegex("then")(e._2).right
+      s <- parseStatementSeq(t._2).right
+      n <- choice(tokens => for {
+                    e <- parseElseClause(tokens).right
+                    n <- parseEnd(e._2).right
+                  } yield (e._1, n._2),
+                  parseEnd)(s._2).right
+    } yield (If(e._1, s._1, if (n._1 == "end") None else Some(n._1.asInstanceOf[StatementSeq])), n._2)
 
-        if (tks.isEmpty)
-          throw new EOSError("int or bool")
-        val (typ, typTokens) = parseType(tks)
-        tks = typTokens
+  /** [[Parser]] which parses an else clause */
+  def parseElseClause: Parser[StatementSeq] =
+    tokens => for {
+      e <- parseRegex("else")(tokens).right
+      s <- parseStatementSeq(e._2).right
+    } yield (s._1, s._2)
 
-        if (tks.isEmpty)
-          throw new EOSError(";")
-        if (tks.head.value != ";")
-          throw new ParseError(";", tks.head)
+  /** [[Parser]] which parses a [[While]] */
+  def parseWhileStatement: Parser[While] =
+    tokens => for {
+      w <- parseRegex("while")(tokens).right
+      e <- parseExpression(w._2).right
+      d <- parseRegex("do")(e._2).right
+      s <- parseStatementSeq(d._2).right
+      n <- parseRegex("end")(s._2).right
+    } yield (While(e._1, s._1), n._2)
 
-        aux(res :+ Decl(value, typ), tks.tail)
-      }
+
+  /** [[Parser]] which parses a [[WriteInt]] */
+  def parseWriteInt: Parser[WriteInt] =
+    tokens => for {
+      w <- parseRegex("writeInt")(tokens).right
+      e <- parseExpression(w._2).right
+    } yield (WriteInt(e._1), e._2)
+
+  /** [[Parser]] which parses an expression */
+  def parseExpression: Parser[Expr] = parseExprAux(parseSimpleExpression, "=|!=|<|>|<=|>=")
+
+  /** [[Parser]] which parses a simple expression */
+  def parseSimpleExpression: Parser[Expr] = parseExprAux(parseTerm, "\\+|\\-")
+
+  /** [[Parser]] which parses a term */
+  def parseTerm: Parser[Expr] = parseExprAux(parseFactor, "\\*|div|mod")
+
+  /** [[Parser]] which parses [[BoolLit]], [[Num]], [[Ident]], or "( [[Expr]] )" */
+  def parseFactor: Parser[Expr] =
+    tokens => choice(parseBoolLit, parseNum, parseIdent, parseParens)(tokens)
+
+  /** [[Parser]] which parses "end" */
+  private def parseEnd: Parser[String] = parseRegex("end")
+
+  /** [[Parser]] which parses a semi-colon */
+  private def parseSC: Parser[String] = parseRegex(";")
+
+  /** [[Parser]] which parses End of File */
+  private def parseEOF: Parser[Unit] =
+    tokens => tokens.toSeq match {
+      case Seq() => Right((Unit, tokens))
+      case _     => Left(BadMatchError(Set("EOF"), tokens.head))
     }
-    val (res, auxTokens) = aux(Vector[Decl](), tokens)
-    (Decls(res:_*), auxTokens)
-  }
 
-  /** Parses a [[Type]]
+  /** [[Parser]] which parses a [[Decl]] */
+  private def parseDeclaration: Parser[Decl] =
+    tokens => for {
+      v <- parseRegex("var")(tokens).right
+      i <- parseIdent(v._2).right
+      a <- parseRegex("as")(i._2).right
+      t <- parseType(a._2).right
+      s <- parseSC(t._2).right
+    } yield (Decl(i._1.value, t._1), s._2)
+
+
+  /** [[Parser]] which parses "( [[Expr]] )" */
+  private def parseParens: Parser[Expr] =
+    tokens => for {
+      l <- parseRegex("\\(")(tokens).right
+      e <- parseExpression(l._2).right
+      r <- parseRegex("\\)")(e._2).right
+    } yield (e._1, r._2)
+
+  /** Helper function for [[parseExpression]], [[parseSimpleExpression]], and [[parseTerm]] */
+  private def parseExprAux(parse: Parser[Expr], regex: String): Parser[Expr] =
+    choice(
+      tokens => for {
+        l  <- parse(tokens).right
+        op <- parseRegex(regex)(l._2).right
+        r  <- parse(op._2).right
+      } yield (Op(op._1, l._1, r._1), r._2),
+      parse)
+
+  /** Parser which parses a [[BoolLit]] */
+  private def parseBoolLit: Parser[BoolLit] =
+    tokens => for {
+      (x,ts) <- parseRegex("false|true")(tokens).right
+    } yield (BoolLit(x), ts)
+
+  /** Parser which parses an [[Num]] */
+  private def parseNum: Parser[Num] =
+    tokens => for {
+      (x,ts) <- parseRegex("[1-9][0-9]*|0")(tokens).right
+    } yield (Num(x), ts)
+
+  /** Parser which parses an [[Ident]] */
+  private def parseIdent: Parser[Ident] =
+    tokens => for {
+      (x,ts) <- parseRegex("[A-Z][A-Z0-9]*")(tokens).right
+    } yield (Ident(x), ts)
+
+  /** Makes a [[Parser]] capable of parsing a regular expression
     *
-    * @param tokens Stream of tokens to parse
-    * @return A [[Type]] and the remaining tokens to parse
-    * @throws [[ParseError]]
-    * @todo Unit Tests!
+    * @param regex The regular expression
+    * @return A new [[Parser]]
     */
-  def parseType(tokens: TokenStream): (Type, TokenStream) = {
-    tokens.head.value match {
-      case "int"  => (Type("int"), tokens.tail)
-      case "bool" => (Type("bool"), tokens.tail)
-      case _      => throw new ParseError("int or bool", tokens.head)
+  private def parseRegex[A](regex: String): Parser[String] =
+    tokens => tokens.toSeq match {
+      case Seq()                                 => Left(EOFError(Set(regex)))
+      case Seq(t, _*) if !t.value.matches(regex) => Left(BadMatchError(Set(regex), t))
+      case Seq(t, rest @ _*)                     => Right((t.value, rest.toIndexedSeq))
     }
-  }
 
-  /** parses a [[StatementSeq]]
+  /** Tries a series of parsers in order, returning the results of the first success
     *
-    * @param tokens Stream of tokens to parse
-    * @return A [[StatementSeq]] and the remaining tokens to parse
-    * @throws [[ParseError]]
+    * @param parsers The parsers
+    * @return A new [[Parser]]
     */
-  def parseStatementSeq(tokens: TokenStream): (StatementSeq, TokenStream) = {
-    def aux(res: Vector[Statement], tokens: TokenStream): Pair[Vector[Statement],TokenStream] = {
-      tokens.toSeq match {
-        case Seq() => (res, tokens)
-        case _     =>
-          try {
-            val (stmt, stmtTokens) = parseStatement(tokens)
-            stmtTokens.toSeq match {
-              case Seq()                        => throw new EOSError(";")
-              case Seq(x, _*) if x.value != ";" => throw new ParseError(";", x)
-              case Seq(_, rest @ _*)            => aux(res :+ stmt, rest)
-            }
-          } catch {
-            case e: ParseError => (res, tokens)
+  private def choice[A](parsers: Parser[A]*): Parser[A] =
+    tokens => {
+      def aux(ps: Traversable[Parser[A]], expected: Set[String]): Either[ParseError, (A, TokenStream)] = {
+        ps.toSeq match {
+          case Seq() if tokens.isEmpty => Left(EOFError(expected))
+          case Seq()                   => Left(BadMatchError(expected, tokens.head))
+          case Seq(p, rest @ _*)       => p(tokens) match {
+            case Left(e) => aux(rest, expected ++ e.expected)
+            case x       => x
           }
-      }
-    }
-    val (stmts, auxTokens) = aux(Vector[Statement](), tokens)
-    (StatementSeq(stmts:_*), auxTokens)
-  }
-
-  /** Parses a [[Statement]]
-    *
-    * @param tokens Stream of tokens to parse
-    * @return A [[Statement]] and the remaining tokens to parse
-    * @throws [[ParseError]]
-    */
-  def parseStatement(tokens: TokenStream): (Statement, TokenStream) = {
-    tokens.head.value match {
-      case "if"                             => parseIfStatement(tokens)
-      case "while"                          => parseWhileStatement(tokens)
-      case "writeInt"                       => parseWriteInt(tokens)
-      case v if v.matches("[A-Z][A-Z0-9]*") => parseAssignment(tokens)
-      case _                                =>
-        throw new ParseError("if, while, writeInt, or assignment", tokens.head)
-    }
-  }
-
-  /** Parses an [[Assignment]]
-    *
-    * @param tokens Stream of tokens to parse
-    * @return An [[Assignment]] and the remaining tokens to parse
-    * @throws [[ParseError]]
-    */
-  def parseAssignment(tokens: TokenStream): (Assignment, TokenStream) = {
-    tokens.toSeq match {
-      case Seq(ident, _*) if !ident.value.matches("[A-Z][A-Z0-9]*") =>
-        throw new ParseError("<ident>", ident)
-      case Seq(_)                                                   =>
-        throw new EOSError(":=")
-      case Seq(_, e, _*) if e.value != ":="                         =>
-        throw new ParseError(":=", e)
-      case Seq(_, _)                                                =>
-        throw new EOSError("<expression> or readInt")
-      case Seq(ident, _, x, rest @ _*) if x.value == "readInt"      =>
-        (Assignment(Ident(ident.value), Right(ReadInt())), rest)
-      case Seq(ident, _, rest @ _*)                                 => {
-        val (expr, tokens) = parseExpression(rest)
-        (Assignment(Ident(ident.value), Left(expr)), tokens)
-      }
-    }
-  }
-
-  /** Parses an [[If]] statement
-    *
-    * @param tokens Stream of tokens to parse
-    * @return An [[If]] and the remaining tokens to parse
-    * @throws [[ParseError]]
-    */
-  def parseIfStatement(tokens: TokenStream): (If, TokenStream) = {
-    assert(tokens.head.value == "if")
-
-    if (tokens.tail.isEmpty)
-      throw new EOSError("<expression>")
-
-    val (expr, exprTokens) = parseExpression(tokens.tail)
-    if (exprTokens.isEmpty)
-      throw new EOSError("then")
-    if (exprTokens.head.value != "then")
-      throw new ParseError("then", exprTokens.head)
-
-    val (stmts, stmtsTokens) = parseStatementSeq(exprTokens.tail)
-
-    val (els, elsTokens) =
-      stmtsTokens.toSeq match {
-        case Seq()                           => throw new EOSError("else or end")
-        case Seq(x, _*) if x.value == "else" => {
-          val (ss, tks) = parseStatementSeq(stmtsTokens.tail)
-          (Some(ss), tks)
-        }
-        case Seq(x, _*) if x.value == "end"  => (None, stmtsTokens)
-        case Seq(x, _*)                      => throw new ParseError("else or end", x)
-      }
-
-    if (elsTokens.isEmpty)
-      throw new EOSError("end")
-    if (elsTokens.head.value != "end")
-      throw new ParseError("end", elsTokens.head)
-
-    (If(expr, stmts, els), elsTokens.tail)
-  }
-
-  /** Parses an else clause
-    *
-    * @param tokens Stream of tokens to parse
-    * @return A [[StatementSeq]] and the remaining tokens to parse
-    * @throws [[ParseError]]
-    */
-  def parseElseClause(tokens: TokenStream): (StatementSeq, TokenStream) = {
-    assert(tokens.head.value == "else")
-    if (tokens.tail.isEmpty)
-      throw new EOSError("<statementSequence>")
-    parseStatementSeq(tokens.tail)
-  }
-
-  /** Parses a while statement
-    *
-    * @param tokens Stream of tokens to parse
-    * @return A [[While]] and the remaining tokens to parse
-    * @throws [[ParseError]]
-    */
-  def parseWhileStatement(tokens: TokenStream): (While, TokenStream) = {
-    assert(tokens.head.value == "while")
-
-    if (tokens.tail.isEmpty)
-      throw new EOSError("<expression>")
-
-    val (expr, exprTokens) = parseExpression(tokens.tail)
-    if (exprTokens.isEmpty)
-      throw new EOSError("do")
-    if (exprTokens.head.value != "do")
-      throw new ParseError("do", exprTokens.head)
-
-    val (stmts, stmtsTokens) = parseStatementSeq(exprTokens.tail)
-    if (stmtsTokens.isEmpty)
-      throw new EOSError("end")
-    if (stmtsTokens.head.value != "end")
-      throw new ParseError("end", stmtsTokens.head)
-
-    (While(expr, stmts), stmtsTokens.tail)
-  }
-
-  /** Parses a writeInt
-    *
-    * @param tokens Stream of tokens to parse
-    * @return A [[WriteInt]] and the remaining tokens to parse
-    * @throws [[ParseError]]
-    */
-  def parseWriteInt(tokens: TokenStream): (WriteInt, TokenStream) = {
-    assert(tokens.head.value == "writeInt")
-    if (tokens.tail.isEmpty) {
-      throw new EOSError("<expression>")
-    } else {
-      val (expr, exprTokens) = parseExpression(tokens.tail)
-      (WriteInt(expr), exprTokens)
-    }
-  }
-
-  private def parseExprAux(
-    tokens: TokenStream, pattern: String, expected: String,
-    parse: TokenStream => (Expr, TokenStream))
-  : (Expr, TokenStream) = {
-    val (left, leftTokens) = parse(tokens)
-    leftTokens.toSeq match {
-      case Seq()                                     => (left, leftTokens)
-      case Seq(op, _*) if !op.value.matches(pattern) => (left, leftTokens)
-      case Seq(op)                                   => throw new EOSError(expected)
-      case Seq(op, rest @ _*)                        => {
-        val (right, righTokens) = parse(rest)
-        (Op(op.value, left, right), righTokens)
-      }
-    }
-  }
-
-  /** Parses an expresstion
-    *
-    * @param tokens The tokens to parse
-    * @return A parsed [[Expr]] and the rest of the [[Scanner.Token]] stream
-    * @throws [[ParseError]]
-    */
-  def parseExpression(tokens: TokenStream): (Expr, TokenStream) =
-    parseExprAux(tokens, "=|!=|<|>|<=|>=", "<simpleExpression>", parseSimpleExpression)
-
-  /** Parses a simpleExpression
-    *
-    * @param tokens The tokens to parse
-    * @return A parsed [[Expr]] and the rest of the [[Scanner.Token]] stream
-    * @throws [[ParseError]]
-    */
-  def parseSimpleExpression(tokens: TokenStream): (Expr, TokenStream) =
-    parseExprAux(tokens, "\\+|\\-", "<term>", parseTerm)
-
-  /** Parses a term
-    *
-    * @param tokens The tokens to parse
-    * @return A parsed [[Expr]] and the rest of the [[Scanner.Token]] stream
-    * @throws [[ParseError]]
-    */
-  def parseTerm(tokens: TokenStream): (Expr, TokenStream) =
-    parseExprAux(tokens, "\\*|div|mod", "<factor>", parseFactor)
-
-  /** Parses a factor
-    *
-    * @param tokens The tokens to parse
-    * @return A parsed [[Expr]] and the rest of the [[Scanner.Token]] stream
-    * @throws [[ParseError]]
-    */
-  def parseFactor(tokens: TokenStream): (Expr, TokenStream) = {
-    tokens.head.value match {
-      case v if v.matches("[1-9][0-9]*|0")  => (Num(v), tokens.tail)
-      case v if v.matches("false|true")     => (BoolLit(v), tokens.tail)
-      case v if v.matches("[A-Z][A-Z0-9]*") => (Ident(v), tokens.tail)
-      case "("                              => {
-        if (tokens.tail.isEmpty)
-          throw new EOSError("<expression>")
-
-        val (expr, exprTokens) = parseExpression(tokens.tail)
-        exprTokens.toSeq match {
-          case Seq()                        => throw new EOSError(")")
-          case Seq(x, _*) if x.value != ")" => throw new ParseError(")", x)
-          case Seq(x, rest @ _*)            => (expr, rest)
         }
       }
-      case _                                =>
-        throw new ParseError("num, false, true, identifier, or (", tokens.head)
+      aux(parsers, Set())
     }
-  }
+
+  /** Applies the given parser 0 or more times, returning a list of the results
+    *
+    * @param parse The parser to apply
+    * @return A new [[Parser]]
+    */
+  private def many[A](parse: Parser[A]): Parser[Traversable[A]] =
+    tokens => {
+      def aux(ts: TokenStream, xs: Vector[A]): Either[ParseError, (Traversable[A], TokenStream)] = {
+        ts.toSeq match {
+          case Seq() => Right(xs, Vector())
+          case _     => parse(ts) match {
+            case res @ Left(e)  => Right(xs, ts)
+            case Right((x, ts)) => aux(ts, xs :+ x)
+          }
+        }
+      }
+      aux(tokens, Vector())
+    }
 
 }

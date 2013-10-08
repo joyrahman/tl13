@@ -17,17 +17,17 @@ object ParserTests {
                         mkParseProgramSuccess("program var A as int ; begin writeInt 1 ; end",
                                               Program(Decls(Decl("A", Type("int"))),
                                                       StatementSeq(WriteInt(Num("1")))))
-                      ),
+              ),
               TestGroup("bad",
-                        mkParseProgramFailure[ParseError]("1 begin end"),
-                        mkParseProgramFailure[ParseError]("program 1 end"),
-                        mkParseProgramFailure[ParseError]("program begin 1"),
-                        mkParseProgramFailure[ParseError]("program begin end 1"),
-                        mkParseProgramFailure[EOSError]("program begin"),
-                        mkParseProgramFailure[EOSError]("program"),
-                        Test("", () => assertThrows[EOSError](parseProgram(List())))
-                      )
-            )
+                        mkParseProgramFailure[Program,BadMatchError]("1 begin end"),
+                        mkParseProgramFailure[Program,BadMatchError]("program 1 end"),
+                        mkParseProgramFailure[Program,BadMatchError]("program begin 1"),
+                        mkParseProgramFailure[Program,BadMatchError]("program begin end 1"),
+                        mkParseProgramFailure[Program,EOFError]("program begin"),
+                        mkParseProgramFailure[Program,EOFError]("program"),
+                        mkParseProgramFailure[Program,BadMatchError]("")
+              )
+    )
 
   /** [[Parser.parseDeclarations]] unit tests */
   val parseDeclsTests =
@@ -40,18 +40,8 @@ object ParserTests {
                                             Decls(Decl("A", Type("int")), Decl("B", Type("bool")))),
                         mkParseDeclsSuccess("var A as int ; begin",
                                             Decls(Decl("A", Type("int"))), List(Token("begin",0,0)))
-                      ),
-              TestGroup("bad",
-                        mkParseDeclsFailure[ParseError]("var as int ;"),
-                        mkParseDeclsFailure[ParseError]("var A int ;"),
-                        mkParseDeclsFailure[ParseError]("var A as ;"),
-                        mkParseDeclsFailure[ParseError]("var A as int 1"),
-                        mkParseDeclsFailure[EOSError]("var A as int"),
-                        mkParseDeclsFailure[EOSError]("var A as"),
-                        mkParseDeclsFailure[EOSError]("var A"),
-                        mkParseDeclsFailure[EOSError]("var")
-                      )
-            )
+              )
+    )
 
   /** [[Parser.parseStatementSeq]] unit tests */
   val parseStmtSeqTests =
@@ -69,8 +59,8 @@ object ParserTests {
                         mkParseStmtSeqSuccess("writeInt 1 ; writeInt 2 ; end",
                                               StatementSeq(WriteInt(Num("1")), WriteInt(Num("2"))),
                                               List(Token("end",0,0)))
-                      )
-            )
+              )
+    )
 
   /** [[Parser.parseStatement]] unit tests */
   val parseStmtTests =
@@ -83,11 +73,11 @@ object ParserTests {
                         mkParseStmtSuccess("while 1 + 2 do end",
                                            While(Op("+", Num("1"), Num("2")), StatementSeq())),
                         mkParseStmtSuccess("writeInt 3", WriteInt(Num("3")))
-                      ),
+              ),
               TestGroup("bad",
-                        mkParseStmtFailure[ParseError]("*")
-                      )
-            )
+                        mkParseStmtFailure[Statement,BadMatchError]("*")
+              )
+    )
 
   /** [[Parser.parseAssignment]] unit tests */
   val parseAsgnTests =
@@ -95,14 +85,14 @@ object ParserTests {
               TestGroup("good",
                         mkParseAsgnSuccess("A := readInt", Assignment(Ident("A"), Right(ReadInt()))),
                         mkParseAsgnSuccess("A := 1 + 2", Assignment(Ident("A"), Left(Op("+", Num("1"), Num("2")))))
-                      ),
+              ),
               TestGroup("bad",
-                        mkParseAsgnFailure[ParseError]("A readInt"),
-                        mkParseAsgnFailure[ParseError]("A 1 + 2"),
-                        mkParseAsgnFailure[EOSError]("A :="),
-                        mkParseAsgnFailure[EOSError]("A")
-                      )
-            )
+                        mkParseAsgnFailure[Assignment,BadMatchError]("A readInt"),
+                        mkParseAsgnFailure[Assignment,BadMatchError]("A 1 + 2"),
+                        mkParseAsgnFailure[Assignment,EOFError]("A :="),
+                        mkParseAsgnFailure[Assignment,EOFError]("A")
+              )
+    )
 
   /** [[Parser.parseIfStatement]] unit tests */
   val parseIfTests =
@@ -115,27 +105,26 @@ object ParserTests {
                                          If(Op("+", Num("1"), Num("2")),
                                             StatementSeq(WriteInt(Num("3"))),
                                             Some(StatementSeq(WriteInt(Num("4"))))))
-                      ),
+              ),
               TestGroup("bad",
-                        mkParseIfFailure[ParseError]("if then writeInt 3 ; end"),
-                        mkParseIfFailure[ParseError]("if 1 + 2 then writeInt 3 ; 3 end"),
-                        mkParseIfFailure[ParseError]("if 1 + 2 + then writeInt 3 ; end"),
-                        mkParseIfFailure[EOSError]("if 1 + 2 then writeInt 3 ; else writeInt 4 ;"),
-                        mkParseIfFailure[EOSError]("if 1 + 2 then writeInt 3 ; else"),
-                        mkParseIfFailure[EOSError]("if 1 + 2 then writeInt 3 ;"),
-                        mkParseIfFailure[EOSError]("if 1 + 2 then"),
-                        mkParseIfFailure[EOSError]("if 1 + 2"),
-                        mkParseIfFailure[EOSError]("if")
-                      )
-            )
+                        mkParseIfFailure[If,BadMatchError]("if then writeInt 3 ; end"),
+                        mkParseIfFailure[If,BadMatchError]("if 1 + 2 then writeInt 3 ; 3 end"),
+                        mkParseIfFailure[If,BadMatchError]("if 1 + 2 + then writeInt 3 ; end"),
+                        mkParseIfFailure[If,BadMatchError]("if 1 + 2 then writeInt 3 ; else writeInt 4 ;"),
+                        mkParseIfFailure[If,BadMatchError]("if 1 + 2 then writeInt 3 ; else"),
+                        mkParseIfFailure[If,EOFError]("if 1 + 2 then writeInt 3 ;"),
+                        mkParseIfFailure[If,EOFError]("if 1 + 2 then"),
+                        mkParseIfFailure[If,EOFError]("if 1 + 2"),
+                        mkParseIfFailure[If,EOFError]("if")
+              )
+    )
 
   /** [[Parser.parseElseClause]] unit tests */
   val parseElseTests =
     TestGroup("parseElseClause",
               TestGroup("good",
-                        mkParseElseSuccess("else writeInt 3 ;", StatementSeq(WriteInt(Num("3"))))),
-              TestGroup("bad",
-                        mkParseElseFailure[EOSError]("else")))
+                        mkParseElseSuccess("else writeInt 3 ;", StatementSeq(WriteInt(Num("3")))),
+                        mkParseElseSuccess("else", StatementSeq())))
 
   /** [[Parser.parseWhileStatement]] unit tests */
   val parseWhileTests =
@@ -146,27 +135,27 @@ object ParserTests {
                                                   StatementSeq(WriteInt(Num("3"))))),
                         mkParseWhileSuccess("while 1 + 2 do end", While(Op("+", Num("1"), Num("2")),
                                                                         StatementSeq()))
-                      ),
+              ),
               TestGroup("bad",
-                        mkParseWhileFailure[ParseError]("while do writeInt 1 ;"),
-                        mkParseWhileFailure[ParseError]("while 1 + 2 writeInt 3 ;"),
-                        mkParseWhileFailure[EOSError]("while 1 + 2 do writeInt 3 ;"),
-                        mkParseWhileFailure[EOSError]("while 1 + 2 do"),
-                        mkParseWhileFailure[EOSError]("while 1 + 2"),
-                        mkParseWhileFailure[EOSError]("while")
-                      )
-            )
+                        mkParseWhileFailure[While,BadMatchError]("while do writeInt 1 ;"),
+                        mkParseWhileFailure[While,BadMatchError]("while 1 + 2 writeInt 3 ;"),
+                        mkParseWhileFailure[While,EOFError]("while 1 + 2 do writeInt 3 ;"),
+                        mkParseWhileFailure[While,EOFError]("while 1 + 2 do"),
+                        mkParseWhileFailure[While,EOFError]("while 1 + 2"),
+                        mkParseWhileFailure[While,EOFError]("while")
+              )
+    )
 
   /** [[Parser.parseWriteInt]] unit tests */
   val parseWriteIntTests =
     TestGroup("parseWriteInt",
               TestGroup("good",
                         mkParseWriteIntSuccess("writeInt 1 + 2", WriteInt(Op("+", Num("1"), Num("2"))))
-                      ),
+              ),
               TestGroup("bad",
-                        mkParseWriteIntFailure[EOSError]("writeInt")
-                      )
-            )
+                        mkParseWriteIntFailure[WriteInt,EOFError]("writeInt")
+              )
+    )
 
   /** [[Parser.parseExpression]] unit tests */
   val parseExprTests =
@@ -207,14 +196,14 @@ object ParserTests {
                                                  Op("+", Num("3"), Num("4"))),
                                               Op("*",
                                                  Op("+", Num("5"), Num("6")),
-                                                 Op("+", Num("7"), Num("8")))))
-                      ),
+                                                 Op("+", Num("7"), Num("8"))))),
+                        mkParseExprSuccess("1 =", Num("1"), List("=":_*))
+              ),
               TestGroup("bad",
-                        mkParseExprFailure[ParseError]("!"),
-                        mkParseExprFailure[ParseError]("= 1 1"),
-                        mkParseExprFailure[EOSError]("1 =")
-                      )
-            )
+                        mkParseExprFailure[Expr,BadMatchError]("!"),
+                        mkParseExprFailure[Expr,BadMatchError]("= 1 1")
+              )
+    )
 
   /** [[Parser.parseSimpleExpression]] unit tests */
   val parseSimpleExprTests =
@@ -225,13 +214,13 @@ object ParserTests {
                         mkParseSimpleExprSuccess("1 + 2 * 3", Op("+", Num("1"), Op("*", Num("2"), Num("3")))),
                         mkParseSimpleExprSuccess("1 * 2 + 3", Op("+", Op("*", Num("1"), Num("2")), Num("3"))),
                         mkParseSimpleExprSuccess("1 * 2 + 3 * 4", Op("+", Op("*", Num("1"), Num("2")),
-                                                                     Op("*", Num("3"), Num("4"))))
-                      ),
+                                                                     Op("*", Num("3"), Num("4")))),
+                        mkParseSimpleExprSuccess("1 +", Num("1"), List("+":_*))
+              ),
               TestGroup("bad",
-                        mkParseSimpleExprFailure[ParseError]("+ 1 1"),
-                        mkParseSimpleExprFailure[EOSError]("1 +")
-                      )
-            )
+                        mkParseSimpleExprFailure[Expr,BadMatchError]("+ 1 1")
+              )
+    )
 
   /** [[Parser.parseTerm]] unit tests */
   val parseTermTests =
@@ -240,13 +229,13 @@ object ParserTests {
                         mkParseTermSuccess("1", Num("1")),
                         mkParseTermSuccess("1 * 2", Op("*", Num("1"), Num("2"))),
                         mkParseTermSuccess("1 div 2", Op("div", Num("1"), Num("2"))),
-                        mkParseTermSuccess("1 mod 2", Op("mod", Num("1"), Num("2")))
-                      ),
+                        mkParseTermSuccess("1 mod 2", Op("mod", Num("1"), Num("2"))),
+                        mkParseTermSuccess("1 *", Num("1"), List(Token("*",0,0)))
+              ),
               TestGroup("bad",
-                        mkParseTermFailure[ParseError]("* 1 1"),
-                        mkParseTermFailure[EOSError]("1 *")
-                      )
-            )
+                        mkParseTermFailure[Expr,BadMatchError]("* 1 1")
+              )
+    )
 
   /** [[Parser.parseFactor]] unit tests */
   val parseFactorTests =
@@ -254,35 +243,35 @@ object ParserTests {
               TestGroup("num",
                         mkParseFactorSuccess("0", Num("0")),
                         mkParseFactorSuccess("10", Num("10"))
-                      ),
+              ),
               TestGroup("boollit",
                         mkParseFactorSuccess("false", BoolLit("false")),
                         mkParseFactorSuccess("true", BoolLit("true"))
-                      ),
+              ),
               TestGroup("ident",
                         mkParseFactorSuccess("A", Ident("A")),
                         mkParseFactorSuccess("A0", Ident("A0"))
-                      ),
+              ),
               TestGroup("expression",
                         mkParseFactorSuccess("( 1 * 2 )", Op("*", Num("1"), Num("2"))),
                         mkParseFactorSuccess("( 1 * 2 + 3 = 4 * 5 + 6 )",
                                              Op("=", Op("+", Op("*", Num("1"), Num("2")), Num("3")),
                                                 Op("+", Op("*", Num("4"), Num("5")), Num("6"))))
-                      ),
+              ),
               TestGroup("invalid",
-                        mkParseFactorFailure[ParseError]("a"),
-                        mkParseFactorFailure[ParseError]("0a"),
-                        mkParseFactorFailure[ParseError]("1("),
-                        mkParseFactorFailure[ParseError]("1)"),
-                        mkParseFactorFailure[ParseError]("(1"),
-                        mkParseFactorFailure[ParseError](")1"),
-                        mkParseFactorFailure[ParseError]("A_"),
-                        mkParseFactorFailure[ParseError]("False"),
-                        mkParseFactorFailure[ParseError]("True"),
-                        mkParseFactorFailure[EOSError]("("),
-                        mkParseFactorFailure[EOSError]("( 1 * 1")
-                      )
-            )
+                        mkParseFactorFailure[Expr,BadMatchError]("a"),
+                        mkParseFactorFailure[Expr,BadMatchError]("0a"),
+                        mkParseFactorFailure[Expr,BadMatchError]("1("),
+                        mkParseFactorFailure[Expr,BadMatchError]("1)"),
+                        mkParseFactorFailure[Expr,BadMatchError]("(1"),
+                        mkParseFactorFailure[Expr,BadMatchError](")1"),
+                        mkParseFactorFailure[Expr,BadMatchError]("A_"),
+                        mkParseFactorFailure[Expr,BadMatchError]("False"),
+                        mkParseFactorFailure[Expr,BadMatchError]("True"),
+                        mkParseFactorFailure[Expr,BadMatchError]("("),
+                        mkParseFactorFailure[Expr,BadMatchError]("( 1 * 1")
+              )
+    )
 
   /** All Parser unit tests */
   val tests =
@@ -302,18 +291,19 @@ object ParserTests {
               parseFactorTests)
 
   /** Implicitly converts a string into a list of [[Scanner.Token]]s */
-  private implicit def toTokenList(s: String): List[Token] = s.split("\\s+").toList.map { Token(_,0,0) }
+  private implicit def toTokenList(s: String): List[Token] = s.split("\\s+").toList.map{ Token(_,0,0) }
 
-  // helper functions for failed parses
+  // helper functions for successful parses
 
-  private def mkParseSuccess(
-    parse: Traversable[Token] => (Node, Traversable[Token]),
-    input: String, expected: Node, remaining: List[Token] = List())
-  : Test =
-    Test(input, () => assertEqual(parse(input), (expected, remaining)))
+  private def mkParseSuccess[A](
+    parse: Parser[A],
+    input: String,
+    expected: Node,
+    remaining: List[Token] = List()
+  ) : Test = Test(input, () => assertEqual(parse(input), Right((expected, remaining))))
 
-  private def mkParseProgramSuccess(input: String, expected: Program) : Test =
-    Test(input, () => assertEqual(parseProgram(input), expected))
+  private def mkParseProgramSuccess(input: String, expected: Program, remaining: List[Token] = List()) : Test =
+    mkParseSuccess(parseProgram, input, expected, remaining)
 
   private def mkParseDeclsSuccess(input: String, expected: Node, remaining: List[Token] = List()): Test =
     mkParseSuccess(parseDeclarations, input, expected, remaining)
@@ -353,48 +343,53 @@ object ParserTests {
 
   // helper functions for failed parses
 
-  private def mkParseFailure[A <: ParseError](
-    parse: Traversable[Token] => (Node, Traversable[Token]), input: String)(implicit m: Manifest[A])
-  : Test =
-    Test(input, () => assertThrows[A](parse(input)))
+  private def mkParseFailure[A,E](parse: Parser[A], input: String)(implicit m: Manifest[E]) = {
+    val clazz = m.erasure.asInstanceOf[Class[E]]
+    Test(input,
+         () => parse(input) match {
+           case Left(e) if e.getClass == clazz => true
+           case x                              =>
+             throw new AssertionFailedError("expected %s, got %s".format(clazz, x))
+         })
+  }
 
-  private def mkParseProgramFailure[A <: ParseError](input: String)(implicit m: Manifest[A]) : Test =
-    Test(input, () => assertThrows[A](parseProgram(input)))
+  private def mkParseProgramFailure[A,E](input: String)(implicit m: Manifest[E]) =
+    mkParseFailure(parseProgram, input)
 
-  private def mkParseDeclsFailure[A <: ParseError](input: String) (implicit m: Manifest[A]) =
-    mkParseFailure[A](parseDeclarations, input)
+  private def mkParseDeclsFailure[A,E](input: String)(implicit m: Manifest[E]) =
+    mkParseFailure(parseDeclarations, input)
 
-  private def mkParseStmtSeqFailure[A <: ParseError](input: String) (implicit m: Manifest[A]) =
-    mkParseFailure[A](parseStatementSeq, input)
+  private def mkParseStmtSeqFailure[A,E](input: String)(implicit m: Manifest[E]) =
+    mkParseFailure(parseStatementSeq, input)
 
-  private def mkParseStmtFailure[A <: ParseError](input: String) (implicit m: Manifest[A]) =
-    mkParseFailure[A](parseStatement, input)
+  private def mkParseStmtFailure[A,E](input: String)(implicit m: Manifest[E]) =
+    mkParseFailure(parseStatement, input)
 
-  private def mkParseAsgnFailure[A <: ParseError](input: String) (implicit m: Manifest[A]) =
-    mkParseFailure[A](parseAssignment, input)
+  private def mkParseAsgnFailure[A,E](input: String)(implicit m: Manifest[E]) =
+    mkParseFailure(parseAssignment, input)
 
-  private def mkParseIfFailure[A <: ParseError](input: String) (implicit m: Manifest[A]) =
-    mkParseFailure[A](parseIfStatement, input)
+  private def mkParseIfFailure[A,E](input: String)(implicit m: Manifest[E]) =
+    mkParseFailure(parseIfStatement, input)
 
-  private def mkParseElseFailure[A <: ParseError](input: String) (implicit m: Manifest[A]) =
-    mkParseFailure[A](parseElseClause, input)
+  private def mkParseElseFailure[A,E](input: String)(implicit m: Manifest[E]) =
+    mkParseFailure(parseElseClause, input)
 
-  private def mkParseWhileFailure[A <: ParseError](input: String) (implicit m: Manifest[A]) =
-    mkParseFailure[A](parseWhileStatement, input)
+  private def mkParseWhileFailure[A,E](input: String)(implicit m: Manifest[E]) =
+    mkParseFailure(parseWhileStatement, input)
 
-  private def mkParseWriteIntFailure[A <: ParseError](input: String) (implicit m: Manifest[A]) =
-    mkParseFailure[A](parseWriteInt, input)
+  private def mkParseWriteIntFailure[A,E](input: String)(implicit m: Manifest[E]) =
+    mkParseFailure(parseWriteInt, input)
 
-  private def mkParseExprFailure[A <: ParseError](input: String) (implicit m: Manifest[A]) =
-    mkParseFailure[A](parseExpression, input)
+  private def mkParseExprFailure[A,E](input: String)(implicit m: Manifest[E]) =
+    mkParseFailure(parseExpression, input)
 
-  private def mkParseSimpleExprFailure[A <: ParseError](input: String) (implicit m: Manifest[A]) =
-    mkParseFailure[A](parseSimpleExpression, input)
+  private def mkParseSimpleExprFailure[A,E](input: String)(implicit m: Manifest[E]) =
+    mkParseFailure(parseSimpleExpression, input)
 
-  private def mkParseTermFailure[A <: ParseError](input: String) (implicit m: Manifest[A]) =
-    mkParseFailure[A](parseTerm, input)
+  private def mkParseTermFailure[A,E](input: String)(implicit m: Manifest[E]) =
+    mkParseFailure(parseTerm, input)
 
-  private def mkParseFactorFailure[A <: ParseError](input: String) (implicit m: Manifest[A]) =
-    mkParseFailure[A](parseFactor, input)
+  private def mkParseFactorFailure[A,E](input: String)(implicit m: Manifest[E]) =
+    mkParseFailure(parseFactor, input)
 
 }

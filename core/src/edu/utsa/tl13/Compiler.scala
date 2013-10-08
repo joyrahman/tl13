@@ -13,11 +13,7 @@ object Compiler {
     * @param resource The resource to use; passed into the given function.
     * @param The function to run with the given resource
     */
-  private def using[T <: { def close() }, A]
-    (resource: T)
-    (block: T => A)
-  : A =
-  {
+  private def using[T <: { def close() }, A](resource: T)(block: T => A): A = {
     try {
       block(resource)
     } finally {
@@ -31,13 +27,25 @@ object Compiler {
     } else {
       try {
         val baseName = args(0).substring(args(0).lastIndexOf("/") + 1, args(0).length - 5)
-        val dotstr =
-          using(scala.io.Source.fromFile(args(0))) { r =>
-            val ast = parseProgram(tokenize(r.mkString))
-            dotify(baseName, ast)
+        val src = using(scala.io.Source.fromFile(args(0))) { r => r.mkString }
+        val dotstr = parseProgram(tokenize(src)) match {
+            case Left(BadMatchError(e, t)) => {
+              println("line %d, column %d: expecting %s, got %s"
+                        .format(t.line, t.column, e.mkString(", "), t.value))
+              None
+            }
+            case Left(EOFError(e))         => {
+              println("expecting %s, got unexpected end of file".format(e.mkString(", ")))
+              None
+            }
+            case Right(a)                  => Some(dotify(baseName, a._1))
           }
-        using(new java.io.FileWriter(baseName + ".ast.dot")) { r =>
-          r.write(dotstr, 0, dotstr.length)
+        if (!dotstr.isEmpty) {
+          val outName = baseName + ".ast.dot"
+          println("writing file: " + outName)
+          using(new java.io.FileWriter(outName)) { r =>
+            r.write(dotstr.get, 0, dotstr.get.length)
+          }
         }
       } catch {
         case e: Throwable => println(e)
