@@ -13,18 +13,16 @@ object Parser {
     * @param expected The expected token
     * @param token The incorrect given token
     */
-  class ParseError(expected: String, token: Token)
-    extends Exception("line: %d, column: %d: expected %s, got %s"
-                      .format(token.line, token.column, expected, token.value))
+  class ParseError(msg: String) extends Exception(msg) {
+    def this(expected: String, token: Token) =
+      this("line: %d, column: %d: expected %s, got %s" .format(token.line, token.column, expected, token.value));
+  }
 
   /** Represents a parse error where a token was expected, but none were available
     *
     * @param expected The expected token
-    * @param lastToken The last token given before the end of stream
     */
-  class EOSError(expected: String, lastToken: Token)
-    extends ParseError(expected, lastToken.copy(value="\"\"",
-                                                column=lastToken.column + lastToken.value.length + 1))
+  class EOSError(expected: String) extends ParseError("expected: %s, got EOF".format(expected))
 
   /** Base class for every node in the AST */
   abstract class Node {
@@ -238,19 +236,19 @@ object Parser {
     */
   def parseProgram(tokens: TokenStream): Program = {
     if (tokens.isEmpty)
-      throw new EOSError("program", Token("", 1, 0))
+      throw new EOSError("program")
     if (tokens.head.value != "program")
       throw new ParseError("program", tokens.head)
 
     val (decls, declTokens) = parseDeclarations(tokens.tail)
     if (declTokens.isEmpty)
-      throw new EOSError("begin", tokens.last)
+      throw new EOSError("begin")
     if (declTokens.head.value != "begin")
       throw new ParseError("begin", declTokens.head)
 
     val (stmts, stmtsTokens) = parseStatementSeq(declTokens.tail)
     if (stmtsTokens.isEmpty)
-      throw new EOSError("end", tokens.last)
+      throw new EOSError("end")
     if (stmtsTokens.head.value != "end")
       throw new ParseError("end", stmtsTokens.head)
     if (!stmtsTokens.tail.isEmpty)
@@ -273,25 +271,25 @@ object Parser {
         var tks = tokens.tail
 
         if (tks.isEmpty)
-          throw new EOSError("<ident>", tokens.last)
+          throw new EOSError("<ident>")
         if (!tks.head.value.matches("[A-Z][A-Z0-9]*"))
           throw new ParseError("<ident>", tks.head)
         val value = tks.head.value
         tks = tks. tail
 
         if (tks.isEmpty)
-          throw new EOSError("as", tokens.last)
+          throw new EOSError("as")
         if (tks.head.value != "as")
           throw new ParseError("as", tks.head)
         tks = tks.tail
 
         if (tks.isEmpty)
-          throw new EOSError("int or bool", tokens.last)
+          throw new EOSError("int or bool")
         val (typ, typTokens) = parseType(tks)
         tks = typTokens
 
         if (tks.isEmpty)
-          throw new EOSError(";", tokens.last)
+          throw new EOSError(";")
         if (tks.head.value != ";")
           throw new ParseError(";", tks.head)
 
@@ -331,7 +329,7 @@ object Parser {
           try {
             val (stmt, stmtTokens) = parseStatement(tokens)
             stmtTokens.toSeq match {
-              case Seq()                        => throw new EOSError(";", tokens.last)
+              case Seq()                        => throw new EOSError(";")
               case Seq(x, _*) if x.value != ";" => throw new ParseError(";", x)
               case Seq(_, rest @ _*)            => aux(res :+ stmt, rest)
             }
@@ -372,11 +370,11 @@ object Parser {
       case Seq(ident, _*) if !ident.value.matches("[A-Z][A-Z0-9]*") =>
         throw new ParseError("<ident>", ident)
       case Seq(_)                                                   =>
-        throw new EOSError(":=", tokens.last)
+        throw new EOSError(":=")
       case Seq(_, e, _*) if e.value != ":="                         =>
         throw new ParseError(":=", e)
       case Seq(_, _)                                                =>
-        throw new EOSError("<expression> or readInt", tokens.last)
+        throw new EOSError("<expression> or readInt")
       case Seq(ident, _, x, rest @ _*) if x.value == "readInt"      =>
         (Assignment(Ident(ident.value), Right(ReadInt())), rest)
       case Seq(ident, _, rest @ _*)                                 => {
@@ -396,11 +394,11 @@ object Parser {
     assert(tokens.head.value == "if")
 
     if (tokens.tail.isEmpty)
-      throw new EOSError("<expression>", tokens.head)
+      throw new EOSError("<expression>")
 
     val (expr, exprTokens) = parseExpression(tokens.tail)
     if (exprTokens.isEmpty)
-      throw new EOSError("then", tokens.last)
+      throw new EOSError("then")
     if (exprTokens.head.value != "then")
       throw new ParseError("then", exprTokens.head)
 
@@ -408,7 +406,7 @@ object Parser {
 
     val (els, elsTokens) =
       stmtsTokens.toSeq match {
-        case Seq()                           => throw new EOSError("else or end", tokens.last)
+        case Seq()                           => throw new EOSError("else or end")
         case Seq(x, _*) if x.value == "else" => {
           val (ss, tks) = parseStatementSeq(stmtsTokens.tail)
           (Some(ss), tks)
@@ -418,7 +416,7 @@ object Parser {
       }
 
     if (elsTokens.isEmpty)
-      throw new EOSError("end", tokens.last)
+      throw new EOSError("end")
     if (elsTokens.head.value != "end")
       throw new ParseError("end", elsTokens.head)
 
@@ -434,7 +432,7 @@ object Parser {
   def parseElseClause(tokens: TokenStream): (StatementSeq, TokenStream) = {
     assert(tokens.head.value == "else")
     if (tokens.tail.isEmpty)
-      throw new EOSError("<statementSequence>", tokens.head)
+      throw new EOSError("<statementSequence>")
     parseStatementSeq(tokens.tail)
   }
 
@@ -448,17 +446,17 @@ object Parser {
     assert(tokens.head.value == "while")
 
     if (tokens.tail.isEmpty)
-      throw new EOSError("<expression>", tokens.head)
+      throw new EOSError("<expression>")
 
     val (expr, exprTokens) = parseExpression(tokens.tail)
     if (exprTokens.isEmpty)
-      throw new EOSError("do", tokens.last)
+      throw new EOSError("do")
     if (exprTokens.head.value != "do")
       throw new ParseError("do", exprTokens.head)
 
     val (stmts, stmtsTokens) = parseStatementSeq(exprTokens.tail)
     if (stmtsTokens.isEmpty)
-      throw new EOSError("end", exprTokens.last)
+      throw new EOSError("end")
     if (stmtsTokens.head.value != "end")
       throw new ParseError("end", stmtsTokens.head)
 
@@ -474,7 +472,7 @@ object Parser {
   def parseWriteInt(tokens: TokenStream): (WriteInt, TokenStream) = {
     assert(tokens.head.value == "writeInt")
     if (tokens.tail.isEmpty) {
-      throw new EOSError("<expression>", tokens.head)
+      throw new EOSError("<expression>")
     } else {
       val (expr, exprTokens) = parseExpression(tokens.tail)
       (WriteInt(expr), exprTokens)
@@ -489,7 +487,7 @@ object Parser {
     leftTokens.toSeq match {
       case Seq()                                     => (left, leftTokens)
       case Seq(op, _*) if !op.value.matches(pattern) => (left, leftTokens)
-      case Seq(op)                                   => throw new EOSError(expected, op)
+      case Seq(op)                                   => throw new EOSError(expected)
       case Seq(op, rest @ _*)                        => {
         val (right, righTokens) = parse(rest)
         (Op(op.value, left, right), righTokens)
@@ -537,11 +535,11 @@ object Parser {
       case v if v.matches("[A-Z][A-Z0-9]*") => (Ident(v), tokens.tail)
       case "("                              => {
         if (tokens.tail.isEmpty)
-          throw new EOSError("<expression>", tokens.head)
+          throw new EOSError("<expression>")
 
         val (expr, exprTokens) = parseExpression(tokens.tail)
         exprTokens.toSeq match {
-          case Seq()                        => throw new EOSError(")", tokens.last)
+          case Seq()                        => throw new EOSError(")")
           case Seq(x, _*) if x.value != ")" => throw new ParseError(")", x)
           case Seq(x, rest @ _*)            => (expr, rest)
         }
