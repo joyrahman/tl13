@@ -90,7 +90,7 @@ object ParserTests {
     TestGroup("parseStatement",
               TestGroup("good",
                         mkParseStmtSuccess("A := 1 + 2",
-                                           Assignment(Ident("A"), Left(Op("+", Num("1"), Num("2"))))),
+                                           AsgnExpr(Ident("A"), Op("+", Num("1"), Num("2")))),
                         mkParseStmtSuccess("if 1 + 2 then end",
                                            If(Op("+", Num("1"), Num("2")), StatementSeq(), None)),
                         mkParseStmtSuccess("while 1 + 2 do end",
@@ -106,8 +106,8 @@ object ParserTests {
   val parseAsgnTests =
     TestGroup("parseAssignment",
               TestGroup("good",
-                        mkParseAsgnSuccess("A := readInt", Assignment(Ident("A"), Right(ReadInt()))),
-                        mkParseAsgnSuccess("A := 1 + 2", Assignment(Ident("A"), Left(Op("+", Num("1"), Num("2")))))
+                        mkParseAsgnSuccess("A := readInt", ReadInt(Ident("A"))),
+                        mkParseAsgnSuccess("A := 1 + 2", AsgnExpr(Ident("A"), Op("+", Num("1"), Num("2"))))
               ),
               TestGroup("bad",
                         mkParseAsgnFailure[Assignment,BadMatchError]("A readInt"),

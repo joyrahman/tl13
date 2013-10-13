@@ -168,20 +168,26 @@ object Parser {
     def value = "if"
   }
 
-  /** Represents an assignment
+  /** Represents an assignment */
+  sealed abstract class Assignment extends Statement
+
+  /** Represents an assignment of an expression to an identifier
     *
-    * @param ident The identifier being assigned
-    * @param expr Either an expression to assign or readInt
+    * @param ident The identifier
+    * @param expr The expression
     */
-  case class Assignment(ident: Ident, expr: Either[Expr, ReadInt]) extends Statement {
-    def children = Vector(ident, if (expr.isLeft) expr.left.get else expr.right.get)
+  case class AsgnExpr(ident: Ident, expr: Expr) extends Assignment {
+    def children = Vector(ident, expr)
     def value = ":="
   }
 
-  /** Represents a readInt */
-  case class ReadInt extends Node {
-    def children = Vector()
-    def value = "readInt"
+  /** Represents an assignment to an identifier from a readInt
+    *
+    * @param ident The identifier
+    */
+  case class ReadInt(ident: Ident) extends Assignment {
+    def children = Vector(ident)
+    def value = ":= readInt"
   }
 
   /** [[Parser]] which parses a [[Program]] */
@@ -226,7 +232,10 @@ object Parser {
       i <- parseIdent(tokens).right
       a <- parseRegex(":=")(i._2).right
       e <- choice(parseExpression, parseRegex("readInt"))(a._2).right
-    } yield (Assignment(i._1, if (e._1 == "readInt") Right(ReadInt()) else Left(e._1.asInstanceOf[Expr])), e._2)
+    } yield e._1 match {
+      case "readInt" => (ReadInt(i._1), e._2)
+      case _         => (AsgnExpr(i._1, e._1.asInstanceOf[Expr]), e._2)
+    }
 
   /** [[Parser]] which parses an [[If]] */
   def parseIfStatement: Parser[If] =
