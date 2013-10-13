@@ -1,0 +1,13 @@
+SRCDIR=src
+DOCDIR=docs
+SCALADOC_DIR=$DOCDIR/scaladoc
+
+echo "Generating scaladocs in: " $SCALADOC_DIR
+if [ ! -d $DOCDIR ]; then
+   mkdir $DOCDIR
+fi
+if [ ! -d $SCALADOC_DIR ]; then
+   mkdir $SCALADOC_DIR
+fi
+
+scaladoc `find $SRCDIR -name '*.scala'` -d $SCALADOC_DIR

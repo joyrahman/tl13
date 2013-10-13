@@ -1,18 +1,5 @@
-set -e
-
-DOCDIR=docs
-SCALADOC_DIR=$DOCDIR/scaladoc
 SRCDIR=src
 BINDIR=bin
-
-echo "Generating scaladocs in: " $SCALADOC_DIR
-if [ ! -d $DOCDIR ]; then
-   mkdir $DOCDIR
-fi
-if [ ! -d $SCALADOC_DIR ]; then
-   mkdir $SCALADOC_DIR
-fi
-scaladoc `find $SRCDIR -name '*.scala'` -d $SCALADOC_DIR
 
 echo "Building src, outputting to " $BINDIR
 rm -rf $BINDIR/*
