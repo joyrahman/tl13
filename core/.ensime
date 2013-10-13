@@ -1,0 +1,15 @@
+;; This config was generated using ensime-config-gen. Feel free to customize its contents manually.
+
+(
+
+:project-name "TL13 Compiler"
+
+:project-package "edu.utsa.tl13"
+
+:sources ("./src")
+
+:compile-jars (".")
+
+:target "./bin"
+
+)
