@@ -6,7 +6,7 @@ import Scanner._
 /** Parser module */
 object Parser {
 
-  /** Represents a stream of [[Token]]s */
+  /** Represents a stream of [[Scanner.Token]]s */
   type TokenStream = Traversable[Token]
 
   /** Function which parses a [[TokenStream]] and returns an error or the
@@ -22,12 +22,12 @@ object Parser {
   /** Represents an error where a token was encounted which wasn't expected */
   case class BadMatchError(expected: Set[String], token: Token) extends ParseError
 
-  /** Represents an error where a [[Token]] was expected but none were available */
+  /** Represents an error where a [[Scanner.Token]] was expected but none were available */
   case class EOFError(expected: Set[String]) extends ParseError
 
   /** Base class for every node in the AST */
   abstract class Node {
-    /** Calls a function on every [[Node]] and sub-node
+    /** Calls a function on every [[Parser.Node]] and sub-node
       *
       * @param acc Initial value that is passed to each function
       * @param f Function to call on each node. The function is passed a node and the current
