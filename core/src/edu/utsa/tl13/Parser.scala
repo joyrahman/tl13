@@ -34,7 +34,13 @@ object Parser {
       *          accumulated state
       * @return The accumulated state
       */
-    def fold[A](acc: A)(f: (A, Node) => A): A
+    def prewalk[A](acc: A)(f: (A, Node) => A): A = {
+      def aux(acc: A, cs: Traversable[Node]): A = {
+        if (cs.isEmpty) acc
+        else            aux(cs.head.prewalk(acc)(f), cs.tail)
+      }
+      aux(f(acc,this), children)
+    }
     /** Returns the child nodes of this node */
     def children: Traversable[Node]
     /** Returns the "value" of the node, if not already provided by a node member */
@@ -52,7 +58,6 @@ object Parser {
     * @param value The value of the number
     */
   case class Num(value: String) extends Expr {
-    def fold[A](acc: A)(f: (A, Node) => A): A = f(acc, this)
     def children = Vector()
   }
 
@@ -61,7 +66,6 @@ object Parser {
     * @param value true or false
     */
   case class BoolLit(value: String) extends Expr {
-    def fold[A](acc: A)(f: (A, Node) => A): A = f(acc, this)
     def children = Vector()
   }
 
@@ -70,7 +74,6 @@ object Parser {
     * @param value The value of the identifier
     */
   case class Ident(value: String) extends Expr {
-    def fold[A](acc: A)(f: (A, Node) => A): A = f(acc, this)
     def children = Vector()
   }
 
@@ -81,12 +84,6 @@ object Parser {
     * @param right The right-hand side expresssion
     */
   case class Op(value: String, left: Expr, right: Expr) extends Expr {
-    def fold[A](acc: A)(f: (A, Node) => A): A = {
-      var res = f(acc, this)
-      res = left.fold(res)(f)
-      res = right.fold(res)(f)
-      res
-    }
     def children = Vector(left, right)
   }
 
@@ -95,8 +92,6 @@ object Parser {
     * @param stmts The sequences
     */
   case class StatementSeq(stmts: Statement*) extends Node {
-    def fold[A](acc: A)(f: (A, Node) => A): A =
-      stmts.foldLeft( f(acc, this) ) { (a,n) => n.fold(a)(f) }
     def children = stmts
     def value = "stmt list"
   }
@@ -106,7 +101,6 @@ object Parser {
     * @param value the type
     */
   case class Type(value: String) extends Node {
-    def fold[A](acc: A)(f: (A, Node) => A): A = f(acc, this)
     def children = Vector()
   }
 
@@ -116,10 +110,6 @@ object Parser {
     * @param typ The [[Type]] of the declaration
     */
   case class Decl(value: String, typ: Type) extends Node {
-    def fold[A](acc: A)(f: (A, Node) => A): A = {
-      var res = f(acc, this)
-      typ.fold(res)(f)
-    }
     def children = Vector(typ)
   }
 
@@ -128,8 +118,6 @@ object Parser {
     * @param decls The declarations
     */
   case class Decls(decls: Decl*) extends Node {
-    def fold[A](acc: A)(f: (A, Node) => A): A =
-      decls.foldLeft( f(acc, this) ) { (a,n) => n.fold(a)(f) }
     def children = decls
     def value = "decl list"
   }
@@ -140,12 +128,6 @@ object Parser {
     * @param stmts The statements in the program
     */
   case class Program(decls: Decls, stmts: StatementSeq) extends Node {
-    def fold[A](acc: A)(f: (A, Node) => A): A = {
-      var res = f(acc, this)
-      res = decls.fold(res)(f)
-      res = stmts.fold(res)(f)
-      res
-    }
     def children = Vector(decls, stmts)
     def value = "program"
   }
@@ -155,10 +137,6 @@ object Parser {
     * @param expr The expression to write
     */
   case class WriteInt(expr: Expr) extends Statement {
-    def fold[A](acc: A)(f: (A, Node) => A): A = {
-      val res = f(acc, this)
-      expr.fold(res)(f)
-    }
     def children = Vector(expr)
     def value = "writeInt"
   }
@@ -169,12 +147,6 @@ object Parser {
     * @param stmts The statements to execute
     */
   case class While(expr: Expr, stmts: StatementSeq) extends Statement {
-    def fold[A](acc: A)(f: (A, Node) => A): A = {
-      var res = f(acc, this)
-      res = expr.fold(res)(f)
-      res = stmts.fold(res)(f)
-      res
-    }
     def children = Vector(expr, stmts)
     def value = "while"
   }
@@ -186,13 +158,6 @@ object Parser {
     * @param els The statements executed when false
     */
   case class If(expr: Expr, stmts: StatementSeq, els: Option[StatementSeq]) extends Statement {
-    def fold[A](acc: A)(f: (A, Node) => A): A = {
-      var res = f(acc, this)
-      res = expr.fold(res)(f)
-      res = stmts.fold(res)(f)
-      res = if (els.isEmpty) res else els.get.fold(res)(f)
-      res
-    }
     def children = {
       var v = Vector[Node](expr, stmts)
       if (els.isEmpty)
@@ -209,22 +174,12 @@ object Parser {
     * @param expr Either an expression to assign or readInt
     */
   case class Assignment(ident: Ident, expr: Either[Expr, ReadInt]) extends Statement {
-    def fold[A](acc: A)(f: (A, Node) => A): A = {
-      var res = f(acc, this)
-      res = ident.fold(res)(f)
-      res = expr match {
-          case Right(x) => x.fold(res)(f)
-          case Left(x)  => x.fold(res)(f)
-        }
-      res
-    }
     def children = Vector(ident, if (expr.isLeft) expr.left.get else expr.right.get)
     def value = ":="
   }
 
   /** Represents a readInt */
   case class ReadInt extends Node {
-    def fold[A](acc: A)(f: (A, Node) => A): A = f(acc, this)
     def children = Vector()
     def value = "readInt"
   }

@@ -8,6 +8,29 @@ import UnitTest._
 /** [[Parser]] unit tests */
 object ParserTests {
 
+  /** Dummy [[Parser.Node]] for testing */
+  case class Dummy(i: Int, x: Option[Dummy], y: Option[Dummy]) extends Node {
+    def children = List(x, y).foldLeft(Vector[Dummy]()) {
+        (acc,node) => if (!node.isEmpty) acc :+ node.get else acc
+      }
+    def value = "dummy"
+  }
+
+  /** Dummy tree for testing */
+  val dummyTree = Dummy(1,
+                        Some(Dummy(2,
+                                   Some(Dummy(3, None, None)),
+                                   Some(Dummy(4, None, None)))),
+                        Some(Dummy(5, None, None)))
+
+
+
+  /** Tests [[Parser.Node.prewalk]] */
+  val prewalkTests =
+    Test("prewalk", () => assertEqual(dummyTree.prewalk(Vector[Int]())
+                                        { (acc,node) => acc :+ (node.asInstanceOf[Dummy].i) },
+                                      Vector(1,2,3,4,5)))
+
   /** [[Parser.parseProgram]] unit tests */
   val parseProgramTests =
     TestGroup("parseProgram",
@@ -276,6 +299,7 @@ object ParserTests {
   /** All Parser unit tests */
   val tests =
     TestGroup("Parser",
+              prewalkTests,
               parseProgramTests,
               parseDeclsTests,
               parseStmtSeqTests,

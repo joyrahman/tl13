@@ -21,7 +21,7 @@ object DOT {
     * @return The DOT graph
     */
   def dotify(graphName: String, node: Node): String = {
-    (node.fold(DotifyState(headerStr.format(graphName), Map())) {
+    (node.prewalk(DotifyState(headerStr.format(graphName), Map())) {
       (state, node) =>
         val newLinks = node.children
                          .foldLeft(state.links)
