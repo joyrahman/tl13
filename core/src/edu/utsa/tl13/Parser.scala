@@ -370,20 +370,20 @@ object Parser {
   /** Parser which parses a [[BoolLit]] */
   private def parseBoolLit: Parser[BoolLit] =
     tokens => for {
-      (x,ts) <- parseRegex("false|true")(tokens).right
-    } yield (BoolLit(x), ts)
+      r <- parseRegex("false|true")(tokens).right
+    } yield (BoolLit(r._1), r._2)
 
   /** Parser which parses an [[Num]] */
   private def parseNum: Parser[Num] =
     tokens => for {
-      (x,ts) <- parseRegex("[1-9][0-9]*|0")(tokens).right
-    } yield (Num(x), ts)
+      r <- parseRegex("[1-9][0-9]*|0")(tokens).right
+    } yield (Num(r._1), r._2)
 
   /** Parser which parses an [[Ident]] */
   private def parseIdent: Parser[Ident] =
     tokens => for {
-      (x,ts) <- parseRegex("[A-Z][A-Z0-9]*")(tokens).right
-    } yield (Ident(x), ts)
+      r <- parseRegex("[A-Z][A-Z0-9]*")(tokens).right
+    } yield (Ident(r._1), r._2)
 
   /** Makes a [[Parser]] capable of parsing a regular expression
     *
