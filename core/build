@@ -1,6 +1,6 @@
 SRCDIR=src
 BINDIR=bin
 
-echo "Building src, outputting to " $BINDIR
+echo "Building src, outputting to" $BINDIR
 rm -rf $BINDIR/*
-scalac -d $BINDIR `find src -name '*.scala'`
+scalac -d $BINDIR `find $SRCDIR -name '*.scala'`
