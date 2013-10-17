@@ -1,12 +1,11 @@
 package edu.utsa.tl13
 
-import edu.utsa.tl13
-import Scanner._
+import Scan._
 
 /** Parser module */
-object Parser {
+object Parse {
 
-  /** Function which parses a [[Scanner.TokenStream]] and returns an error or the
+  /** Function which parses a [[Scan.TokenStream]] and returns an error or the
     * result of the parse and remaining tokens
     */
   type Parser[A] = TokenStream => Either[ParseError, (A, TokenStream)]
@@ -19,12 +18,12 @@ object Parser {
   /** Represents an error where a token was encounted which wasn't expected */
   case class BadMatchError(expected: Set[String], token: Token) extends ParseError
 
-  /** Represents an error where a [[Scanner.Token]] was expected but none were available */
+  /** Represents an error where a [[Scan.Token]] was expected but none were available */
   case class EOFError(expected: Set[String]) extends ParseError
 
   /** Base class for every node in the AST */
   abstract class Node {
-    /** Calls a function on every [[Parser.Node]] and sub-node in a pre-order traversal
+    /** Calls a function on every [[Parse.Node]] and sub-node in a pre-order traversal
       *
       * @param acc Initial value that is passed to each function
       * @param f Function to call on each node. The function is passed a node and the current
@@ -38,7 +37,7 @@ object Parser {
       }
       aux(f(acc,this), children)
     }
-    /** Calls a function on every [[Parser.Node]] and sub-node in a post-order traversal
+    /** Calls a function on every [[Parse.Node]] and sub-node in a post-order traversal
       *
       * @param acc Initial value that is passed to each function
       * @param f Function to call on each node. The function is passed a node and the current

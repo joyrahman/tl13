@@ -1,11 +1,10 @@
 package edu.utsa.tl13
 
-import edu.utsa.tl13._
-import Scanner._
+import Scan._
 import UnitTest._
 
-/** [[Scanner]] unit tests */
-object ScannerTests {
+/** [[Scan]] unit tests */
+object ScanTests {
 
   private val source =
 """% sqrt.tl13
@@ -31,11 +30,11 @@ begin
 
 end"""
 
-  /** [[Scanner]] unit tests */
+  /** [[Scan]] unit tests */
   val tests =
-    TestGroup("Scanner",
+    TestGroup("Scan",
               Test("good",
-                   () => assertEqual(Scanner.tokenize(source),
+                   () => assertEqual(tokenize(source),
                                      List(Token("program",6,0), Token("var",7,2), Token("N",7,6),
                                           Token("as",7,8), Token("int",7,11), Token(";",7,15),
                                           Token("var",8,2), Token("SQRT",8,6), Token("as",8,11),

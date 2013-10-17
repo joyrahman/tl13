@@ -2,16 +2,16 @@ package edu.utsa.tl13
 
 import edu.utsa.tl13._
 import UnitTest._
-import ParserTests._
-import ScannerTests._
+import ParseTests._
+import ScanTests._
 
 /** All compiler unit tests */
 object CompilerTests extends App {
 
   val tests =
     TestGroup("Compiler",
-              ParserTests.tests,
-              ScannerTests.tests)
+              ParseTests.tests,
+              ScanTests.tests)
 
   simpleReport(tests.run)
 

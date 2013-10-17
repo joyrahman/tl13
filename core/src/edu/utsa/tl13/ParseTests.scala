@@ -1,14 +1,13 @@
 package edu.utsa.tl13
 
-import edu.utsa.tl13
-import Parser._
-import Scanner._
+import Parse._
+import Scan._
 import UnitTest._
 
-/** [[Parser]] unit tests */
-object ParserTests {
+/** [[Parse]] unit tests */
+object ParseTests {
 
-  /** Dummy [[Parser.Node]] for testing */
+  /** Dummy [[Parse.Node]] for testing */
   case class Dummy(i: Int, x: Option[Dummy], y: Option[Dummy]) extends Node {
     def children = List(x, y).foldLeft(Vector[Dummy]()) {
         (acc,node) => if (!node.isEmpty) acc :+ node.get else acc
@@ -25,19 +24,19 @@ object ParserTests {
 
 
 
-  /** Tests [[Parser.Node.prewalk]] */
+  /** Tests [[Parse.Node.prewalk]] */
   val prewalkTests =
     Test("prewalk", () => assertEqual(dummyTree.prewalk(Vector[Int]())
                                         { (acc,node) => acc :+ (node.asInstanceOf[Dummy].i) },
                                       Vector(1,2,3,4,5)))
 
-  /** Tests [[Parser.Node.postwalk]] */
+  /** Tests [[Parse.Node.postwalk]] */
   val postwalkTests =
     Test("postwalk", () => assertEqual(dummyTree.postwalk(Vector[Int]())
                                          { (acc,node) => acc :+ (node.asInstanceOf[Dummy].i) },
                                        Vector(3,4,2,5,1)))
 
-  /** [[Parser.parseProgram]] unit tests */
+  /** [[Parse.parseProgram]] unit tests */
   val parseProgramTests =
     TestGroup("parseProgram",
               TestGroup("good",
@@ -58,7 +57,7 @@ object ParserTests {
               )
     )
 
-  /** [[Parser.parseDeclarations]] unit tests */
+  /** [[Parse.parseDeclarations]] unit tests */
   val parseDeclsTests =
     TestGroup("parseDeclarations",
               TestGroup("good",
@@ -72,7 +71,7 @@ object ParserTests {
               )
     )
 
-  /** [[Parser.parseStatementSeq]] unit tests */
+  /** [[Parse.parseStatementSeq]] unit tests */
   val parseStmtSeqTests =
     TestGroup("parseStatementSeq",
               TestGroup("good",
@@ -91,7 +90,7 @@ object ParserTests {
               )
     )
 
-  /** [[Parser.parseStatement]] unit tests */
+  /** [[Parse.parseStatement]] unit tests */
   val parseStmtTests =
     TestGroup("parseStatement",
               TestGroup("good",
@@ -108,7 +107,7 @@ object ParserTests {
               )
     )
 
-  /** [[Parser.parseAssignment]] unit tests */
+  /** [[Parse.parseAssignment]] unit tests */
   val parseAsgnTests =
     TestGroup("parseAssignment",
               TestGroup("good",
@@ -123,7 +122,7 @@ object ParserTests {
               )
     )
 
-  /** [[Parser.parseIfStatement]] unit tests */
+  /** [[Parse.parseIfStatement]] unit tests */
   val parseIfTests =
     TestGroup("parseIfStatement",
               TestGroup("good",
@@ -148,14 +147,14 @@ object ParserTests {
               )
     )
 
-  /** [[Parser.parseElseClause]] unit tests */
+  /** [[Parse.parseElseClause]] unit tests */
   val parseElseTests =
     TestGroup("parseElseClause",
               TestGroup("good",
                         mkParseElseSuccess("else writeInt 3 ;", StatementSeq(WriteInt(Num("3")))),
                         mkParseElseSuccess("else", StatementSeq())))
 
-  /** [[Parser.parseWhileStatement]] unit tests */
+  /** [[Parse.parseWhileStatement]] unit tests */
   val parseWhileTests =
     TestGroup("parseWhileStatement",
               TestGroup("good",
@@ -175,7 +174,7 @@ object ParserTests {
               )
     )
 
-  /** [[Parser.parseWriteInt]] unit tests */
+  /** [[Parse.parseWriteInt]] unit tests */
   val parseWriteIntTests =
     TestGroup("parseWriteInt",
               TestGroup("good",
@@ -186,7 +185,7 @@ object ParserTests {
               )
     )
 
-  /** [[Parser.parseExpression]] unit tests */
+  /** [[Parse.parseExpression]] unit tests */
   val parseExprTests =
     TestGroup("parseExpression",
               TestGroup("good",
@@ -234,7 +233,7 @@ object ParserTests {
               )
     )
 
-  /** [[Parser.parseSimpleExpression]] unit tests */
+  /** [[Parse.parseSimpleExpression]] unit tests */
   val parseSimpleExprTests =
     TestGroup("parseSimpleExpression",
               TestGroup("good",
@@ -251,7 +250,7 @@ object ParserTests {
               )
     )
 
-  /** [[Parser.parseTerm]] unit tests */
+  /** [[Parse.parseTerm]] unit tests */
   val parseTermTests =
     TestGroup("parseTerm",
               TestGroup("good",
@@ -266,7 +265,7 @@ object ParserTests {
               )
     )
 
-  /** [[Parser.parseFactor]] unit tests */
+  /** [[Parse.parseFactor]] unit tests */
   val parseFactorTests =
     TestGroup("parseFactor",
               TestGroup("num",
@@ -304,7 +303,7 @@ object ParserTests {
 
   /** All Parser unit tests */
   val tests =
-    TestGroup("Parser",
+    TestGroup("Parse",
               prewalkTests,
               postwalkTests,
               parseProgramTests,

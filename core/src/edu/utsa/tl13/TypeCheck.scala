@@ -1,6 +1,6 @@
 package edu.utsa.tl13
 
-import Parser._
+import Parse._
 
 /** Type checking functionality */
 object TypeCheck {
@@ -43,7 +43,7 @@ object TypeCheck {
     * @param node The node
     * @param okMap Map containing necessary child information
     * @param typeMap Map containing types of nodes
-    * @param decls The [[Parser.Program]]'s declarations
+    * @param decls The [[Parse.Program]]'s declarations
     * @return true if the node is well-typed
     */
   private def typeOk(node: Node, okMap: TypeOkMap, typeMap: TypeMap, decls: Decls): Boolean = node match {
@@ -64,17 +64,17 @@ object TypeCheck {
       case _               => false
     }
 
-  /** Builds a [[TypeMap]] from a [[Parser.Program]] */
+  /** Builds a [[TypeMap]] from a [[Parse.Program]] */
   private def mkTypeMap(program: Program): TypeMap =
     program.prewalk(TypeMap()) { (m,n) => m + (n -> nodeType(program.decls)(n)) }
 
-  /** Builds a [[TypeOkMap]] from a [[Parser.Program]] */
+  /** Builds a [[TypeOkMap]] from a [[Parse.Program]] */
   private def mkTypeOkMap(program: Program, typeMap: TypeMap): TypeOkMap =
     program.postwalk(Map[Node,Boolean]()) { (m,n) => m + (n -> typeOk(n, m, typeMap, program.decls)) }
 
-  /** Determines if a [[Parser.Program]] is well-typed
+  /** Determines if a [[Parse.Program]] is well-typed
     *
-    * @param program The [[Parser.Program]]
+    * @param program The [[Parse.Program]]
     * @return A Right with the [[TypeMap]] and [[TypeOkMap]] if the program is well-typed,
               otherwise a Left with the same information
     */

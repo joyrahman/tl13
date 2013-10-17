@@ -1,8 +1,8 @@
 package edu.utsa.tl13
 
-import Parser._
+import Parse._
 import DOT._
-import Scanner._
+import Scan._
 import TypeCheck._
 
 object Compiler {

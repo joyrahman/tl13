@@ -1,7 +1,7 @@
 package edu.utsa.tl13
 
 /** Module for scanner-related functionality */
-object Scanner {
+object Scan {
 
   /** Represents a source file token
     *

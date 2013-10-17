@@ -1,7 +1,8 @@
 package edu.utsa.tl13
 
-import edu.utsa.tl13.Parser._
-import edu.utsa.tl13.TypeCheck._
+import edu.utsa.tl13
+import Parse._
+import TypeCheck._
 
 /** Contains code related to the DOT language */
 object DOT {
@@ -14,11 +15,11 @@ object DOT {
   private val descStr     = "  n%d [label=\"%s\",fillcolor=\"%s\",shape=box]\n"
   private val linkStr     = "  n%d -> n%d\n"
 
-  /** Creates a map of [[Parser.Node]]'s to their children */
+  /** Creates a map of [[Parse.Node]]'s to their children */
   def mkLinkMap(node: Node): Map[Node,Seq[Node]] =
     node.prewalk(Map[Node,Seq[Node]]()) { (m,n) => m + (n -> n.children) }
 
-  /** Creates DOT notation for a [[Parser.Program]]
+  /** Creates DOT notation for a [[Parse.Program]]
     *
     * @param graphName Title for the graph
     * @param program The program
