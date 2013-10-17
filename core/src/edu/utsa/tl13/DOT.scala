@@ -16,7 +16,7 @@ object DOT {
   private val linkStr     = "  n%d -> n%d\n"
 
   /** Creates a map of [[Parse.Node]]'s to their children */
-  def mkLinkMap(node: Node): Map[Node,Seq[Node]] =
+  private def mkLinkMap(node: Node): Map[Node,Seq[Node]] =
     node.prewalk(Map[Node,Seq[Node]]()) { (m,n) => m + (n -> n.children) }
 
   /** Gets a label for a DOT graph node */
