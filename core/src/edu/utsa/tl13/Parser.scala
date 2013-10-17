@@ -110,12 +110,33 @@ object Parser {
     def value = "stmt list"
   }
 
-  /** Represents a type
-    *
-    * @param value the type
-    */
-  case class Type(value: String) extends Node {
+  /** Represents a type */
+  abstract class Type extends Node {
     def children = Vector()
+  }
+
+  object Type {
+    /** Creates a type from a string */
+    def apply(s: String) = s match {
+        case "int" => TL13Int()
+        case "bool" => TL13Bool()
+        case "none" => TL13None()
+      }
+  }
+
+  /** Represents an int in TL13 */
+  case class TL13Int extends Type {
+    def value = "int"
+  }
+
+  /** Represents a bool in TL13 */
+  case class TL13Bool extends Type {
+    def value = "bool"
+  }
+
+  /** Represents a node with no type */
+  case class TL13None extends Type {
+    def value = "none"
   }
 
   /** Represents a declaration
