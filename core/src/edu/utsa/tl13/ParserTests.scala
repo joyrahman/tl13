@@ -31,6 +31,12 @@ object ParserTests {
                                         { (acc,node) => acc :+ (node.asInstanceOf[Dummy].i) },
                                       Vector(1,2,3,4,5)))
 
+  /** Tests [[Parser.Node.postwalk]] */
+  val postwalkTests =
+    Test("postwalk", () => assertEqual(dummyTree.postwalk(Vector[Int]())
+                                         { (acc,node) => acc :+ (node.asInstanceOf[Dummy].i) },
+                                       Vector(3,4,2,5,1)))
+
   /** [[Parser.parseProgram]] unit tests */
   val parseProgramTests =
     TestGroup("parseProgram",
@@ -300,6 +306,7 @@ object ParserTests {
   val tests =
     TestGroup("Parser",
               prewalkTests,
+              postwalkTests,
               parseProgramTests,
               parseDeclsTests,
               parseStmtSeqTests,

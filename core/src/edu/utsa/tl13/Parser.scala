@@ -41,6 +41,20 @@ object Parser {
       }
       aux(f(acc,this), children)
     }
+    /** Calls a function on every [[Parser.Node]] and sub-node in a post-order traversal
+      *
+      * @param acc Initial value that is passed to each function
+      * @param f Function to call on each node. The function is passed a node and the current
+      *          accumulated state
+      * @return The accumulated state
+      */
+    def postwalk[A](acc: A)(f: (A, Node) => A): A = {
+      def aux(acc: A, cs: Traversable[Node]): A = {
+        if (cs.isEmpty) acc
+        else            aux(cs.head.postwalk(acc)(f), cs.tail)
+      }
+      f(aux(acc, children), this)
+    }
     /** Returns the child nodes of this node */
     def children: Traversable[Node]
     /** Returns the "value" of the node, if not already provided by a node member */
