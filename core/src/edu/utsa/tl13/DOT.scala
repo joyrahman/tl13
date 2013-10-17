@@ -59,6 +59,7 @@ object DOT {
       case _: TL13None     => "none"
       case _: StatementSeq => "stmt list"
       case _: Decls        => "decl list"
+      case BoolLit(v)      => v
       case Ident(v)        => v
       case Op(v,_,_)       => v
       case Decl(v,_)       => v
