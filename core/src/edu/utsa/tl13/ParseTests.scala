@@ -12,7 +12,6 @@ object ParseTests {
     def children = List(x, y).foldLeft(Vector[Dummy]()) {
         (acc,node) => if (!node.isEmpty) acc :+ node.get else acc
       }
-    def value = "dummy"
   }
 
   /** Dummy tree for testing */

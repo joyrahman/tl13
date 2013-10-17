@@ -53,8 +53,6 @@ object Parse {
     }
     /** Returns the child nodes of this node */
     def children: Seq[Node]
-    /** Returns the "value" of the node, if not already provided by a node member */
-    def value: String
   }
 
   /** Represents an expression. Can be a num, boollit, ident, or operation */
@@ -103,7 +101,6 @@ object Parse {
     */
   case class StatementSeq(stmts: Statement*) extends Node {
     def children = stmts
-    def value = "stmt list"
   }
 
   /** Represents a type */
@@ -121,19 +118,13 @@ object Parse {
   }
 
   /** Represents an int in TL13 */
-  case class TL13Int extends Type {
-    def value = "int"
-  }
+  case class TL13Int extends Type
 
   /** Represents a bool in TL13 */
-  case class TL13Bool extends Type {
-    def value = "bool"
-  }
+  case class TL13Bool extends Type
 
   /** Represents a node with no type */
-  case class TL13None extends Type {
-    def value = "none"
-  }
+  case class TL13None extends Type
 
   /** Represents a declaration
     *
@@ -150,7 +141,6 @@ object Parse {
     */
   case class Decls(decls: Decl*) extends Node {
     def children = decls
-    def value = "decl list"
   }
 
   /** Represents a program
@@ -160,7 +150,6 @@ object Parse {
     */
   case class Program(decls: Decls, stmts: StatementSeq) extends Node {
     def children = Vector(decls, stmts)
-    def value = "program"
   }
 
   /** Represents a writeInt statement
@@ -169,7 +158,6 @@ object Parse {
     */
   case class WriteInt(expr: Expr) extends Statement {
     def children = Vector(expr)
-    def value = "writeInt"
   }
 
   /** Represents a while statement
@@ -179,7 +167,6 @@ object Parse {
     */
   case class While(expr: Expr, stmts: StatementSeq) extends Statement {
     def children = Vector(expr, stmts)
-    def value = "while"
   }
 
   /** Represents an if statement
@@ -196,7 +183,6 @@ object Parse {
       else
         v :+ els.get
     }
-    def value = "if"
   }
 
   /** Represents an assignment */
@@ -209,7 +195,6 @@ object Parse {
     */
   case class AsgnExpr(ident: Ident, expr: Expr) extends Assignment {
     def children = Vector(ident, expr)
-    def value = ":="
   }
 
   /** Represents an assignment to an identifier from a readInt
@@ -218,7 +203,6 @@ object Parse {
     */
   case class ReadInt(ident: Ident) extends Assignment {
     def children = Vector(ident)
-    def value = ":= readInt"
   }
 
   /** [[Parser]] which parses a [[Program]] */
