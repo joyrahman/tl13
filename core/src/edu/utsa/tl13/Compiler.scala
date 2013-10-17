@@ -44,7 +44,7 @@ object Compiler {
   private def writeDotFile(baseName: String, program: Program, typeMap: TypeMap, okMap: TypeOkMap) = {
     val outName = baseName + ".ast.dot"
     println("writing file: " + outName)
-    writeFile(outName, dotify(baseName, program, typeMap, okMap))
+    writeFile(outName, dotifyAST(program, baseName, typeMap, okMap))
   }
 
   def main(args: Array[String]) {

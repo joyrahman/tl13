@@ -7,13 +7,40 @@ import TypeCheck._
 /** Contains code related to the DOT language */
 object DOT {
 
-  private val templateStr = "digraph %s {\n" +
-                            "  ordering=out;\n" +
-                            "  node [shape = box, style = filled];\n" +
-                            "%s" +
-                            "}"
-  private val descStr     = "  n%d [label=\"%s\",fillcolor=\"%s\",shape=box]\n"
-  private val linkStr     = "  n%d -> n%d\n"
+  /** Represents a DOT graph
+    *
+    * @param name The name of the graph
+    * @param items The attributes and relationships in the graph
+    */
+  case class Graph(val name: String, val items: Item*) {
+    override def toString = ("digraph %s {\n"                          +
+                             "  ordering=out;\n"                       +
+                             "  node [shape = box, style = filled];\n" +
+                             "%s"                                      +
+                             "}").format(name, items.mkString)
+  }
+
+  /** Represents either a relationship or an attribute in a DOT graph */
+  sealed abstract class Item
+
+  /** Represents an attribute in a DOT graph
+    *
+    * @param node The name of the node
+    * @param label The node's label
+    * @param color The node color
+    */
+  case class Attribute(node: String, label: String, color: String) extends Item {
+    override def toString =
+      "  %s [label=\"%s\",fillcolor=\"%s\",shape=box]\n".format(node, label, color)
+  }
+
+  /** Represents a relationship in a DOT graph
+    *
+    * @param nodes The nodes in the graph
+    */
+  case class Relationship(nodes: String*) extends Item {
+    override def toString = "  %s\n".format(nodes.mkString(" -> "))
+  }
 
   /** Creates a map of [[Parse.Node]]'s to their children */
   private def mkLinkMap(node: Node): Map[Node,Seq[Node]] =
@@ -38,19 +65,22 @@ object DOT {
       case Num(v)          => v
     }
 
+  /** Gets a string representation of a [[Parse.Node]] suitable for use in a DOT graph */
+  private def mkDOTNode(node: Node): String = ("n" + node.hashCode).replaceAll("n-", "n_")
+
   /** Creates DOT notation for a [[Parse.Program]]
     *
-    * @param graphName Title for the graph
     * @param program The program
+    * @param graphName Title for the graph
     * @param typeMap The program's type map
     * @param okMap The program's TypeOkMap
     * @return A DOT notation string
     */
-  def dotify(graphName: String, program: Program, typeMap: TypeMap, okMap: TypeOkMap): String = {
+  def dotifyAST(program: Program, graphName: String, typeMap: TypeMap, okMap: TypeOkMap): String = {
     val linkMap = mkLinkMap(program)
-    val body = linkMap.foldLeft("") {
-        (s,kv) => kv match {
-          case (p,cs) => {
+    val items = linkMap.foldLeft(Vector[Item]()) {
+        (is,kv) => kv match {
+          case (p, cs) => {
             val color = okMap(p) match {
                 case false => "/pastel13/1"
                 case true  => typeMap(p) match {
@@ -59,13 +89,13 @@ object DOT {
                   case _          => "/x11/lightgrey"
                 }
               }
-            cs.foldLeft(s + descStr.format(p.hashCode,label(p),color)) {
-              (s,c) => s + linkStr.format(p.hashCode,c.hashCode)
+            cs.foldLeft(is :+ Attribute(mkDOTNode(p), label(p), color)) {
+              (is,c) => is :+ Relationship(mkDOTNode(p), mkDOTNode(c))
             }
           }
         }
       }
-    templateStr.format(graphName.replaceAll("-","_"), body).replaceAll("n-", "n_")
+    Graph(graphName.replaceAll("-", "_"), items:_*).toString
   }
 
 }
