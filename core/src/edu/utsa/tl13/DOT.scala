@@ -16,7 +16,7 @@ object DOT {
 
   /** Creates a map of [[Parser.Node]]'s to their children */
   def mkLinkMap(node: Node): Map[Node,Seq[Node]] =
-    node.prewalk(Map[Node,Seq[Node]]()) { (m,n) => m + (n -> n.children.toSeq) }
+    node.prewalk(Map[Node,Seq[Node]]()) { (m,n) => m + (n -> n.children) }
 
   /** Creates DOT notation for a [[Parser.Program]]
     *

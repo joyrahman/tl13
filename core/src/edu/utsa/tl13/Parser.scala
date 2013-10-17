@@ -7,7 +7,7 @@ import Scanner._
 object Parser {
 
   /** Represents a stream of [[Scanner.Token]]s */
-  type TokenStream = Traversable[Token]
+  type TokenStream = Seq[Token]
 
   /** Function which parses a [[TokenStream]] and returns an error or the
     * result of the parse and remaining tokens
@@ -35,7 +35,7 @@ object Parser {
       * @return The accumulated state
       */
     def prewalk[A](acc: A)(f: (A, Node) => A): A = {
-      def aux(acc: A, cs: Traversable[Node]): A = {
+      def aux(acc: A, cs: Seq[Node]): A = {
         if (cs.isEmpty) acc
         else            aux(cs.head.prewalk(acc)(f), cs.tail)
       }
@@ -49,14 +49,14 @@ object Parser {
       * @return The accumulated state
       */
     def postwalk[A](acc: A)(f: (A, Node) => A): A = {
-      def aux(acc: A, cs: Traversable[Node]): A = {
+      def aux(acc: A, cs: Seq[Node]): A = {
         if (cs.isEmpty) acc
         else            aux(cs.head.postwalk(acc)(f), cs.tail)
       }
       f(aux(acc, children), this)
     }
     /** Returns the child nodes of this node */
-    def children: Traversable[Node]
+    def children: Seq[Node]
     /** Returns the "value" of the node, if not already provided by a node member */
     def value: String
   }
@@ -240,7 +240,7 @@ object Parser {
   def parseDeclarations: Parser[Decls] =
     tokens => for {
       d <- many(parseDeclaration)(tokens).right
-    } yield (Decls(d._1.toSeq:_*), d._2)
+    } yield (Decls(d._1:_*), d._2)
 
   /** [[Parser]] which parses a [[Type]] */
   def parseType: Parser[Type] =
@@ -255,7 +255,7 @@ object Parser {
                    s <- parseStatement(tokens).right
                    c <- parseSC(s._2).right
                  } yield (s._1, c._2))(tokens).right
-    } yield (StatementSeq(ss._1.toSeq:_*), ss._2)
+    } yield (StatementSeq(ss._1:_*), ss._2)
 
   /** [[Parser]] which parses a [[Statement]] */
   def parseStatement: Parser[Statement] =
@@ -332,7 +332,7 @@ object Parser {
 
   /** [[Parser]] which parses End of File */
   private def parseEOF: Parser[Unit] =
-    tokens => tokens.toSeq match {
+    tokens => tokens match {
       case Seq() => Right((Unit, tokens))
       case _     => Left(BadMatchError(Set("EOF"), tokens.head))
     }
@@ -390,7 +390,7 @@ object Parser {
     * @return A new [[Parser]]
     */
   private def parseRegex[A](regex: String): Parser[String] =
-    tokens => tokens.toSeq match {
+    tokens => tokens match {
       case Seq()                                 => Left(EOFError(Set(regex)))
       case Seq(t, _*) if !t.value.matches(regex) => Left(BadMatchError(Set(regex), t))
       case Seq(t, rest @ _*)                     => Right((t.value, rest.toIndexedSeq))
@@ -403,8 +403,8 @@ object Parser {
     */
   private def choice[A](parsers: Parser[A]*): Parser[A] =
     tokens => {
-      def aux(ps: Traversable[Parser[A]], expected: Set[String]): Either[ParseError, (A, TokenStream)] = {
-        ps.toSeq match {
+      def aux(ps: Seq[Parser[A]], expected: Set[String]): Either[ParseError, (A, TokenStream)] = {
+        ps match {
           case Seq() if tokens.isEmpty => Left(EOFError(expected))
           case Seq()                   => Left(BadMatchError(expected, tokens.head))
           case Seq(p, rest @ _*)       => p(tokens) match {
@@ -421,10 +421,10 @@ object Parser {
     * @param parse The parser to apply
     * @return A new [[Parser]]
     */
-  private def many[A](parse: Parser[A]): Parser[Traversable[A]] =
+  private def many[A](parse: Parser[A]): Parser[Seq[A]] =
     tokens => {
-      def aux(ts: TokenStream, xs: Vector[A]): Either[ParseError, (Traversable[A], TokenStream)] = {
-        ts.toSeq match {
+      def aux(ts: TokenStream, xs: Vector[A]): Either[ParseError, (Seq[A], TokenStream)] = {
+        ts match {
           case Seq() => Right(xs, Vector())
           case _     => parse(ts) match {
             case res @ Left(e)  => Right(xs, ts)

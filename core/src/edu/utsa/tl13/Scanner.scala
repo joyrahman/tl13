@@ -17,8 +17,8 @@ object Scanner {
     * @param input the source
     * @return a traversable set of Token objects
     */
-  def tokenize(input: String): Traversable[Token] = {
-    def tokenizeLine(linePair: Pair[String,Int]): Traversable[Token] = {
+  def tokenize(input: String): Seq[Token] = {
+    def tokenizeLine(linePair: Pair[String,Int]): Seq[Token] = {
       val (line, lineNum) = linePair
       val tokens = "\\S+|\\s+".r.findAllIn(line).foldLeft(Vector[Token]()) {
         (v:Vector[Token], s:String) => {
