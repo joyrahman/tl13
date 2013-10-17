@@ -264,7 +264,10 @@ object Parse {
                     n <- parseEnd(e._2).right
                   } yield (e._1, n._2),
                   parseEnd)(s._2).right
-    } yield (If(e._1, s._1, if (n._1 == "end") None else Some(n._1.asInstanceOf[StatementSeq])), n._2)
+    } yield n._1 match {
+      case "end" => (If(e._1, s._1, None), n._2)
+      case _     => (If(e._1, s._1, Some(n._1.asInstanceOf[StatementSeq])), n._2)
+    }
 
   /** [[Parser]] which parses an else clause */
   def parseElseClause: Parser[StatementSeq] =
@@ -340,10 +343,10 @@ object Parse {
   private def parseExprAux(parse: Parser[Expr], regex: String): Parser[Expr] =
     choice(
       tokens => for {
-        l  <- parse(tokens).right
-        op <- parseRegex(regex)(l._2).right
-        r  <- parse(op._2).right
-      } yield (Op(op._1, l._1, r._1), r._2),
+        l <- parse(tokens).right
+        o <- parseRegex(regex)(l._2).right
+        r <- parse(o._2).right
+      } yield (Op(o._1, l._1, r._1), r._2),
       parse)
 
   /** Parser which parses a [[BoolLit]] */
