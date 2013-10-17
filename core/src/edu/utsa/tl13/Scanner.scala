@@ -12,13 +12,16 @@ object Scanner {
     */
   case class Token(value: String, line: Int, column: Int)
 
+  /** Represents a stream of [[Token]]s */
+  type TokenStream = Seq[Token]
+
   /** Breaks a source string into Token objects
     *
     * @param input the source
     * @return a traversable set of Token objects
     */
-  def tokenize(input: String): Seq[Token] = {
-    def tokenizeLine(linePair: Pair[String,Int]): Seq[Token] = {
+  def tokenize(input: String): TokenStream = {
+    def tokenizeLine(linePair: Pair[String,Int]): TokenStream = {
       val (line, lineNum) = linePair
       val tokens = "\\S+|\\s+".r.findAllIn(line).foldLeft(Vector[Token]()) {
         (v:Vector[Token], s:String) => {

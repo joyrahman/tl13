@@ -6,10 +6,7 @@ import Scanner._
 /** Parser module */
 object Parser {
 
-  /** Represents a stream of [[Scanner.Token]]s */
-  type TokenStream = Seq[Token]
-
-  /** Function which parses a [[TokenStream]] and returns an error or the
+  /** Function which parses a [[Scanner.TokenStream]] and returns an error or the
     * result of the parse and remaining tokens
     */
   type Parser[A] = TokenStream => Either[ParseError, (A, TokenStream)]
