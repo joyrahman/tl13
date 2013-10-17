@@ -1,38 +1,51 @@
 package edu.utsa.tl13
 
 import edu.utsa.tl13.Parser._
+import edu.utsa.tl13.TypeCheck._
 
 /** Contains code related to the DOT language */
 object DOT {
 
-  private val headerStr = "digraph %s {\n" +
-                          "  ordering=out;\n" +
-                          "  node [shape = box, style = filled];\n"
+  private val templateStr = "digraph %s {\n" +
+                            "  ordering=out;\n" +
+                            "  node [shape = box, style = filled];\n" +
+                            "%s" +
+                            "}"
+  private val descStr     = "  n%d [label=\"%s\",fillcolor=\"%s\",shape=box]\n"
+  private val linkStr     = "  n%d -> n%d\n"
 
-  private val descStr = "  n%d [label=\"%s\",fillcolor=\"/x11/white\",shape=box]\n"
-  private val linkStr = "  n%d -> n%d\n"
+  /** Creates a map of [[Parser.Node]]'s to their children */
+  def mkLinkMap(node: Node): Map[Node,Seq[Node]] =
+    node.prewalk(Map[Node,Seq[Node]]()) { (m,n) => m + (n -> n.children.toSeq) }
 
-  private case class DotifyState(res: String, links: Map[Int,Int])
-
-  /** Creates a DOT graph from a parsed AST
+  /** Creates DOT notation for a [[Parser.Program]]
     *
-    * @param graphName Name of the graph
-    * @param node The AST
-    * @return The DOT graph
+    * @param graphName Title for the graph
+    * @param program The program
+    * @param typeMap The program's type map
+    * @param okMap The program's TypeOkMap
+    * @return A DOT notation string
     */
-  def dotify(graphName: String, node: Node): String = {
-    (node.prewalk(DotifyState(headerStr.format(graphName), Map())) {
-      (state, node) =>
-        val newLinks = node.children
-                         .foldLeft(state.links)
-                           { (ls,n) => ls + ((n.hashCode) -> node.hashCode) }
-        var newRes = state.res + descStr.format(node.hashCode, node.value) +
-          (newLinks.contains(node.hashCode) match {
-            case true  => linkStr.format(state.links(node.hashCode), node.hashCode)
-            case false => ""
-          })
-        state.copy(newRes, newLinks)
-    }.res + "}").replaceAll("n-", "n_")
+  def dotify(graphName: String, program: Program, typeMap: TypeMap, okMap: TypeOkMap): String = {
+    val linkMap = mkLinkMap(program)
+    val body = linkMap.foldLeft("") {
+        (s,kv) => kv match {
+          case (p,cs) => {
+            val color = okMap(p) match {
+                case false => "/pastel13/1"
+                case true  => typeMap(p) match {
+                  case TL13Int()  => "/pastel13/3"
+                  case TL13Bool() => "/pastel13/2"
+                  case _          => "/x11/lightgrey"
+                }
+              }
+            cs.foldLeft(s + descStr.format(p.hashCode,p.value,color)) {
+              (s,c) => s + linkStr.format(p.hashCode,c.hashCode)
+            }
+          }
+        }
+      }
+    templateStr.format(graphName.replaceAll("-","_"), body).replaceAll("n-", "n_")
   }
 
 }

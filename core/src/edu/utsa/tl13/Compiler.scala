@@ -3,6 +3,7 @@ package edu.utsa.tl13
 import Parser._
 import DOT._
 import Scanner._
+import TypeCheck._
 
 object Compiler {
 
@@ -21,31 +22,54 @@ object Compiler {
     }
   }
 
+  /** Reads text from a file
+    *
+    * @param filename The name of the file
+    * @return The file contents
+    */
+  private def readFile(filename: String) =
+    using(scala.io.Source.fromFile(filename)) { r => r.mkString }
+
+  /** Writes text to a file
+    *
+    * @param filename The file's name
+    * @param contents The contents to write
+    */
+  private def writeFile(filename: String, contents: String) =
+    using(new java.io.FileWriter(filename)) { r =>
+      r.write(contents, 0, contents.length)
+    }
+
+  /** Writes the DOT notation for the program */
+  private def writeDotFile(baseName: String, program: Program, typeMap: TypeMap, okMap: TypeOkMap) = {
+    val outName = baseName + ".ast.dot"
+    println("writing file: " + outName)
+    writeFile(outName, dotify(baseName, program, typeMap, okMap))
+  }
+
   def main(args: Array[String]) {
     if (args.length != 1 || !args(0).endsWith(".tl13")) {
       println("You must pass in a file ending with .tl13")
     } else {
       try {
         val baseName = args(0).substring(args(0).lastIndexOf("/") + 1, args(0).length - 5)
-        val src = using(scala.io.Source.fromFile(args(0))) { r => r.mkString }
-        val dotstr = parseProgram(tokenize(src)) match {
-            case Left(BadMatchError(e, t)) => {
-              println("line %d, column %d: expecting %s, got %s"
-                        .format(t.line, t.column, e.mkString(", "), t.value))
-              None
+        val src = readFile(args(0))
+        val program = parseProgram(tokenize(src))
+        program match {
+          case Left(BadMatchError(e, t)) =>
+            println("line %d, column %d: expecting %s, got %s"
+                      .format(t.line, t.column, e.mkString(", "), t.value))
+          case Left(EOFError(e))         =>
+            println("expecting %s, got unexpected end of file".format(e.mkString(", ")))
+            None
+          case Right(a)                  =>
+            typeCheck(a._1) match {
+              case Right((typeMap,okMap)) => {
+                writeDotFile(baseName, program.right.get._1, typeMap, okMap)
+                // TODO output ILOC, MIPS, etc
+              }
+              case Left((typeMap,okMap)) => writeDotFile(baseName, program.right.get._1, typeMap, okMap)
             }
-            case Left(EOFError(e))         => {
-              println("expecting %s, got unexpected end of file".format(e.mkString(", ")))
-              None
-            }
-            case Right(a)                  => Some(dotify(baseName, a._1))
-          }
-        if (!dotstr.isEmpty) {
-          val outName = baseName + ".ast.dot"
-          println("writing file: " + outName)
-          using(new java.io.FileWriter(outName)) { r =>
-            r.write(dotstr.get, 0, dotstr.get.length)
-          }
         }
       } catch {
         case e: Throwable => println(e)
