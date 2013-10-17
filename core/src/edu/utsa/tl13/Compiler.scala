@@ -40,11 +40,32 @@ object Compiler {
       r.write(contents, 0, contents.length)
     }
 
-  /** Writes the DOT notation for the program */
-  private def writeDotFile(baseName: String, program: Program, typeMap: TypeMap, okMap: TypeOkMap) = {
-    val outName = baseName + ".ast.dot"
-    println("writing file: " + outName)
-    writeFile(outName, dotifyAST(program, baseName, typeMap, okMap))
+  /** Checks parse success, reports it and exits */
+  private def handleProgramParse(program: Either[ParseError, (Program,TokenStream)]) {
+    program match {
+      case Left(BadMatchError(e, t)) => {
+        println("PARSER ERROR: line %d, column %d: expecting %s, got %s"
+                  .format(t.line, t.column, e.mkString(", "), t.value))
+        System.exit(-1)
+      }
+      case Left(EOFError(e))         => {
+        println("PARSER ERROR: expecting %s, got unexpected end of file"
+                  .format(e.mkString(", ")))
+        System.exit(-1)
+      }
+      case _                         => Unit
+    }
+  }
+
+  /** Writes the AST dot file, detects and reports type errors */
+  private def handleTypeCheck(program: Program, baseName: String, typeMap :TypeMap, okMap: TypeOkMap) {
+    val dotFileName = baseName + ".ast.dot"
+    println("writing file: " + dotFileName)
+    writeFile(dotFileName, dotifyAST(program, baseName, typeMap, okMap))
+    if ( !isWellTyped(okMap) ) {
+      println("TYPE ERROR DETECTED")
+      System.exit(-2)
+    }
   }
 
   def main(args: Array[String]) {
@@ -54,23 +75,12 @@ object Compiler {
       try {
         val baseName = args(0).substring(args(0).lastIndexOf("/") + 1, args(0).length - 5)
         val src = readFile(args(0))
+
         val program = parseProgram(tokenize(src))
-        program match {
-          case Left(BadMatchError(e, t)) =>
-            println("line %d, column %d: expecting %s, got %s"
-                      .format(t.line, t.column, e.mkString(", "), t.value))
-          case Left(EOFError(e))         =>
-            println("expecting %s, got unexpected end of file".format(e.mkString(", ")))
-            None
-          case Right(a)                  =>
-            typeCheck(a._1) match {
-              case Right((typeMap,okMap)) => {
-                writeDotFile(baseName, program.right.get._1, typeMap, okMap)
-                // TODO output ILOC, MIPS, etc
-              }
-              case Left((typeMap,okMap)) => writeDotFile(baseName, program.right.get._1, typeMap, okMap)
-            }
-        }
+        handleProgramParse(program)
+
+        val (typeMap, typeOkMap) = typeCheck(program.right.get._1)
+        handleTypeCheck(program.right.get._1, baseName, typeMap, typeOkMap)
       } catch {
         case e: Throwable => println(e)
       }

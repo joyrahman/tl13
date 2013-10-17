@@ -23,11 +23,11 @@ object TypeCheck {
 
   /** Calculates the type of a node
     *
-    * @param decls The [[Program]]'s declarations
     * @param node The node
+    * @param decls The [[Program]]'s declarations
     * @return The node's [[Type]]
     */
-  private def nodeType(decls: Decls)(node: Node): Type = node match {
+  private def nodeType(node: Node, decls: Decls): Type = node match {
       case Decl(_,t)                                     => t
       case Op(o,_,_) if o.matches("=|!=|<|>|<=|>=")      => TL13Bool()
       case Op(o,_,_) if o.matches("\\+|\\-|\\*|div|mod") => TL13Int()
@@ -41,12 +41,12 @@ object TypeCheck {
   /** Determines if a node is well-typed
     *
     * @param node The node
-    * @param okMap Map containing necessary child information
-    * @param typeMap Map containing types of nodes
     * @param decls The [[Parse.Program]]'s declarations
+    * @param typeMap Map containing types of nodes
+    * @param okMap Map containing necessary child information
     * @return true if the node is well-typed
     */
-  private def typeOk(node: Node, okMap: TypeOkMap, typeMap: TypeMap, decls: Decls): Boolean = node match {
+  private def typeOk(node: Node, decls: Decls, typeMap: TypeMap, okMap: TypeOkMap): Boolean = node match {
       case ReadInt(i)      => okMap(i) && typeMap(i) == TL13Int()
       case WriteInt(e)     => okMap(e) && typeMap(e) == TL13Int()
       case If(e, _, _)     => okMap(e) && typeMap(e) == TL13Bool()
@@ -66,25 +66,30 @@ object TypeCheck {
 
   /** Builds a [[TypeMap]] from a [[Parse.Program]] */
   private def mkTypeMap(program: Program): TypeMap =
-    program.prewalk(TypeMap()) { (m,n) => m + (n -> nodeType(program.decls)(n)) }
+    program.prewalk(TypeMap()) { (m,n) => m + (n -> nodeType(n, program.decls)) }
 
   /** Builds a [[TypeOkMap]] from a [[Parse.Program]] */
   private def mkTypeOkMap(program: Program, typeMap: TypeMap): TypeOkMap =
-    program.postwalk(Map[Node,Boolean]()) { (m,n) => m + (n -> typeOk(n, m, typeMap, program.decls)) }
+    program.postwalk(Map[Node,Boolean]()) {
+      (okMap,node) => okMap + (node -> typeOk(node, program.decls, typeMap, okMap))
+    }
 
-  /** Determines if a [[Parse.Program]] is well-typed
+  /** Returns type information about a [[Parse.Program]]
     *
-    * @param program The [[Parse.Program]]
-    * @return A Right with the [[TypeMap]] and [[TypeOkMap]] if the program is well-typed,
-              otherwise a Left with the same information
+    * @param program The program
+    * @return The program's [[TypeMap]] and [[TypeOkMap]]
     */
-  def typeCheck(program: Program): Either[(TypeMap,TypeOkMap),(TypeMap,TypeOkMap)] = {
+  def typeCheck(program: Program): (TypeMap,TypeOkMap) = {
     val typeMap = mkTypeMap(program)
     val okMap = mkTypeOkMap(program, typeMap)
-    okMap.forall(kv => kv._2 == true) match {
-      case true  => Right(typeMap, okMap)
-      case false => Left(typeMap, okMap)
-    }
+    (typeMap, okMap)
   }
+
+  /** Determines if a program is well-typed
+    *
+    * @param okMap The program's [[TypeOkMap]]
+    * @return true if the program is well-typed
+    */
+  def isWellTyped(okMap: TypeOkMap): Boolean = okMap.forall(kv => kv._2 == true)
 
 }
