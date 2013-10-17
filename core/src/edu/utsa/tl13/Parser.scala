@@ -27,7 +27,7 @@ object Parser {
 
   /** Base class for every node in the AST */
   abstract class Node {
-    /** Calls a function on every [[Parser.Node]] and sub-node
+    /** Calls a function on every [[Parser.Node]] and sub-node in a pre-order traversal
       *
       * @param acc Initial value that is passed to each function
       * @param f Function to call on each node. The function is passed a node and the current
