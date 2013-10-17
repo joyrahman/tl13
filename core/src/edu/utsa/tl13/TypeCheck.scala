@@ -51,7 +51,7 @@ object TypeCheck {
       case WriteInt(e)     => okMap(e) && typeMap(e) == TL13Int()
       case If(e, _, _)     => okMap(e) && typeMap(e) == TL13Bool()
       case While(e, _)     => okMap(e) && typeMap(e) == TL13Bool()
-      case Program(ds, ss) => ds.decls.forall(okMap(_)) && ss.stmts.forall(okMap(_))
+      case Program(ds, ss) => okMap(ds) && ds.decls.forall(okMap(_)) && ss.stmts.forall(okMap(_))
       case AsgnExpr(i,e)   => okMap(i) && okMap(e) && typeMap(i) == typeMap(e)
       case ds: Decls       => ds.decls.map(_.value).distinct.size == ds.decls.size
       case Op(_, e1, e2)   => okMap(e1) && okMap(e2) && typeMap(e1) == TL13Int() && typeMap(e2) == TL13Int()
