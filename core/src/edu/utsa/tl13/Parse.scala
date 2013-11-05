@@ -175,9 +175,9 @@ object Parse {
     * @param stmts The statements that are executed when true
     * @param els The statements executed when false
     */
-  case class If(expr: Expr, stmts: StatementSeq, els: Option[StatementSeq]) extends Statement {
+  case class If(expr: Expr, thn: StatementSeq, els: Option[StatementSeq]) extends Statement {
     def children = {
-      var v = Vector[Node](expr, stmts)
+      var v = Vector[Node](expr, thn)
       if (els.isEmpty)
         v
       else
