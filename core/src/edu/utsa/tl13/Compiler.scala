@@ -61,7 +61,7 @@ object Compiler {
   private def handleTypeCheck(program: Program, baseName: String, typeMap :TypeMap, okMap: TypeOkMap) {
     val dotFileName = baseName + ".ast.dot"
     println("writing file: " + dotFileName)
-    writeFile(dotFileName, dotifyAST(program, baseName, typeMap, okMap))
+    writeFile(dotFileName, AST.dotifyAST(program, baseName, typeMap, okMap))
     if ( !isWellTyped(okMap) ) {
       println("TYPE ERROR DETECTED")
       System.exit(-2)
