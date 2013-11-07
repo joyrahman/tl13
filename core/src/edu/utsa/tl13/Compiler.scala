@@ -69,6 +69,7 @@ object Compiler {
     }
   }
 
+  /** Writes the ILOC control flow graph */
   private def handleILOC(program: Program, baseName: String) {
     val blocks = ilocifyProgram(program)
     val dotFileName = baseName + ".cfg.dot"

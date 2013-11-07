@@ -8,6 +8,7 @@ import TypeCheck._
 /** Contains code related to the DOT language */
 object DOT {
 
+  /** Generates a DOT graph from an AST */
   object AST {
 
     /** Represents a DOT graph
@@ -104,11 +105,14 @@ object DOT {
 
   }
 
+  /** Generates a DOT graph from a set of ILOC blocks */
   object ILOC {
 
     /** Represents a DOT graph
       *
       * @param name The name of the graph
+      * @param entry The DOT node for the CFG entry
+      * @param exit The DOT node for the CFG exit
       * @param items The attributes and relationships in the graph
       */
     case class Graph(val name: String, val entry: String, val exit: String, val items: Item*) {
@@ -159,6 +163,7 @@ object DOT {
     /** Gets a string representation of a [[Parse.Node]] suitable for use in a DOT graph */
     private def mkDOTNode(block: Block): String = ("n" + block.hashCode).replaceAll("n-", "n_")
 
+    /** Converts an ILOC instruction to a string for the DOT graph */
     private def instrToString(instr: Instruction): String =
       instr match {
         case loadI(c1, r2)      => "loadI %s =&gt; R%s".format(c1, r2)
@@ -181,9 +186,9 @@ object DOT {
         case exit()             => "exit"
       }
 
-    /** Creates DOT notation for a [[Parse.Program]]
+    /** Creates DOT notation for a set of ILOC blocks
       *
-      * @param program The program
+      * @param blocks The ILOC blocks
       * @param graphName Title for the graph
       * @return A DOT notation string
       */
