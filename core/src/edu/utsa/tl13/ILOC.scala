@@ -67,8 +67,7 @@ object ILOC {
     def aux(e1: Expr, e2: Expr)(f: (Int,Int,Int) => Instruction): (Int,IlocifyState) = {
       val (r1, s1) = ilocifyExpr(e1, state)
       val (r2, s2) = ilocifyExpr(e2, s1)
-      val r = List(r1, r2).max
-      (r+1, s2.appendInstruction(f(r1, r2, r+1)).incRegister)
+      (s2.register, s2.appendInstruction(f(r1, r2, s2.register)).incRegister)
     }
     val (o, f) = op match { case Op(o, e1, e2) => (o, aux(e1, e2)_) }
     o match {
@@ -164,11 +163,11 @@ object ILOC {
 
   def ilocifyProgram(program: Program): Iterable[Block] = {
     val stmts = program.stmts
-    val idents = program.decls.decls.map(_.value).zip(Stream(0)).toMap
+    val idents = program.decls.decls.map(_.value).zip(Stream.from(0)).toMap
     val reg = idents.map(_._2).max + 1
-    val block = Block(0, Vector())
+    val block = Block(0, program.decls.decls.map(d => loadI(0, idents(d.value))))
     val blocks = Set[Block]()
-    val newState = ilocifyStatementSeq(stmts, IlocifyState(idents, reg, block, blocks))
+    val newState = ilocifyStatementSeq(stmts, IlocifyState(idents, reg, block, blocks)).appendInstruction(exit())
     newState.blocks + newState.currBlock
   }
 
@@ -180,6 +179,7 @@ object ILOC {
     else block.instrs.last match {
       case cbr(_, l2, l3) => Vector(l2, l3).map(x => all.find(y => x == y.label)).filter(!_.isEmpty).map(_.get)
       case jumpI(l1)      => Vector(all.find(x => x.label == l1)).filter(!_.isEmpty).map(_.get)
+      case _              => Vector()
     }
 
   def mkBlockLinkMap(blocks: Iterable[Block]): Map[Block, Iterable[Block]] =
