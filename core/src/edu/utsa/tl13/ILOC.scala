@@ -50,6 +50,8 @@ object ILOC {
 
   case class jumpI(l1: Int) extends Instruction
 
+  case class exit() extends Instruction
+
   def ilocifyNum(num: Num, state: IlocifyState): Pair[Int,IlocifyState] =
     (state.register, state.appendInstruction(loadI(num.value.toInt, state.register)).incRegister)
 
