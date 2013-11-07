@@ -185,6 +185,7 @@ object ILOC {
   def mkBlockLinkMap(blocks: Iterable[Block]): Map[Block, Iterable[Block]] =
     blocks.foldLeft(Map[Block, Iterable[Block]]())((acc,block) => acc + (block -> childBlocks(block, blocks)))
 
+}
 
   /* @TODO turn this into unit tests
    import edu.utsa.tl13.Parse._
@@ -245,5 +246,3 @@ object ILOC {
 
 
    */
-
-}
