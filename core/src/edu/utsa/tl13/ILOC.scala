@@ -174,6 +174,9 @@ object ILOC {
   def firstBlock(blocks: Iterable[Block]): Block =
     (blocks.toSet &~ blocks.map(block => childBlocks(block, blocks)).flatten.toSet).head
 
+  def lastBlock(blocks: Iterable[Block]): Block =
+    blocks.filter(childBlocks(_, blocks).isEmpty).head
+
   def childBlocks[A](block: Block, all: Iterable[Block]): Iterable[Block] =
     if (block.instrs.isEmpty) Vector()
     else block.instrs.last match {

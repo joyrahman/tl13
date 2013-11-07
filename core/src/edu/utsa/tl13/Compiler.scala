@@ -2,6 +2,7 @@ package edu.utsa.tl13
 
 import Parse._
 import DOT._
+import ILOC._
 import Scan._
 import TypeCheck._
 
@@ -61,11 +62,18 @@ object Compiler {
   private def handleTypeCheck(program: Program, baseName: String, typeMap :TypeMap, okMap: TypeOkMap) {
     val dotFileName = baseName + ".ast.dot"
     println("writing file: " + dotFileName)
-    writeFile(dotFileName, AST.dotifyAST(program, baseName, typeMap, okMap))
+    writeFile(dotFileName, AST.dotify(program, baseName, typeMap, okMap))
     if ( !isWellTyped(okMap) ) {
       println("TYPE ERROR DETECTED")
       System.exit(-2)
     }
+  }
+
+  private def handleILOC(program: Program, baseName: String) {
+    val blocks = ilocifyProgram(program)
+    val dotFileName = baseName + ".cfg.dot"
+    println("writing file: " + dotFileName)
+    writeFile(dotFileName, DOT.ILOC.dotify(blocks, baseName))
   }
 
   def main(args: Array[String]) {
@@ -81,6 +89,8 @@ object Compiler {
 
         val (typeMap, typeOkMap) = typeCheck(program.right.get._1)
         handleTypeCheck(program.right.get._1, baseName, typeMap, typeOkMap)
+
+        handleILOC(program.right.get._1, baseName)
       } catch {
         case e: Throwable => println(e)
       }
