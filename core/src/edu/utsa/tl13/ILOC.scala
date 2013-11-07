@@ -185,18 +185,6 @@ object ILOC {
   def mkBlockLinkMap(blocks: Iterable[Block]): Map[Block, Iterable[Block]] =
     blocks.foldLeft(Map[Block, Iterable[Block]]())((acc,block) => acc + (block -> childBlocks(block, blocks)))
 
-  // def prewalkBlocks[A](f: (A, Block) => A, acc: A, blocks: Iterable[Block]): A = {
-  //   val linkMap = mkBlockLinkMap(blocks: Iterable[Block])
-  //   def aux(acc: A, block: Block, visited: Iterable[Block]): A = {
-  //     if (visited.exists(_ == block)) {
-  //       acc
-  //     } else {
-  //       val res = f(acc, block)
-  //       linkMap(block).foldLeft(res)((a,b) => aux(a, b, visited.toSeq :+ block))
-  //     }
-  //   }
-  //   aux(acc, firstBlock(blocks), Vector())
-  // }
 
   /* @TODO turn this into unit tests
    import edu.utsa.tl13.Parse._
