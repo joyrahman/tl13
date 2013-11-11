@@ -81,10 +81,10 @@ object ILOC {
   case class i2i(r1: Int, r2: Int) extends Instruction
 
   /** Represents an ILOC cbr instruction */
-  case class cbr(r1: Int, l2: Int, l3: Int) extends Instruction
+  case class cbr(r1: Int, b2: Int, b3: Int) extends Instruction
 
   /** Represents an ILOC jumpI instruction */
-  case class jumpI(l1: Int) extends Instruction
+  case class jumpI(b1: Int) extends Instruction
 
   /** Represents an ILOC exit instruction (added by me) */
   case class exit() extends Instruction
