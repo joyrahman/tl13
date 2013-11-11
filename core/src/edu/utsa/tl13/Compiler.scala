@@ -3,6 +3,7 @@ package edu.utsa.tl13
 import Parse._
 import DOT._
 import ILOC._
+import MIPS._
 import Scan._
 import TypeCheck._
 
@@ -42,7 +43,7 @@ object Compiler {
     }
 
   /** Checks parse success, reports it and exits */
-  private def handleProgramParse(program: Either[ParseError, (Program,TokenStream)]) {
+  private def handleProgramParse(program: Either[ParseError, (Parse.Program,TokenStream)]) {
     program match {
       case Left(BadMatchError(e, t)) => {
         println("PARSER ERROR: line %d, column %d: expecting %s, got %s"
@@ -59,7 +60,7 @@ object Compiler {
   }
 
   /** Writes the AST dot file, detects and reports type errors */
-  private def handleTypeCheck(program: Program, baseName: String, typeMap :TypeMap, okMap: TypeOkMap) {
+  private def handleTypeCheck(program: Parse.Program, baseName: String, typeMap :TypeMap, okMap: TypeOkMap) {
     val dotFileName = baseName + ".ast.dot"
     println("writing file: " + dotFileName)
     writeFile(dotFileName, AST.dotify(program, baseName, typeMap, okMap))
@@ -70,11 +71,20 @@ object Compiler {
   }
 
   /** Writes the ILOC control flow graph */
-  private def handleILOC(program: Program, baseName: String) {
+  private def handleILOC(program: Parse.Program, baseName: String) = {
     val blocks = ilocifyProgram(program)
     val dotFileName = baseName + ".cfg.dot"
     println("writing file: " + dotFileName)
     writeFile(dotFileName, DOT.ILOC.dotify(blocks, baseName))
+    blocks.toSeq
+  }
+
+  /** Writes out the MIPS file */
+  private def handleMIPS(ilocBlocks: Seq[ILOC.Block], baseName: String) {
+    val mipsProgram = mipsifyProgram(ilocBlocks)
+    val sFileName = baseName + ".s"
+    println("writing file: " + sFileName)
+    writeFile(sFileName, mipsProgram.toString)
   }
 
   def main(args: Array[String]) {
@@ -91,7 +101,9 @@ object Compiler {
         val (typeMap, typeOkMap) = typeCheck(program.right.get._1)
         handleTypeCheck(program.right.get._1, baseName, typeMap, typeOkMap)
 
-        handleILOC(program.right.get._1, baseName)
+        val ilocBlocks = handleILOC(program.right.get._1, baseName)
+
+        handleMIPS(ilocBlocks, baseName)
       } catch {
         case e: Throwable => println(e)
       }
