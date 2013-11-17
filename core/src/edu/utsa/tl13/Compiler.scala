@@ -46,13 +46,13 @@ object Compiler {
   private def handleProgramParse(program: Either[ParseError, (Parse.Program,TokenStream)]) {
     program match {
       case Left(BadMatchError(e, t)) => {
-        println("PARSER ERROR: line %d, column %d: expecting %s, got %s"
-                  .format(t.line, t.column, e.mkString(", "), t.value))
+        Console.err.println("PARSER ERROR: line %d, column %d: expecting %s, got %s"
+                              .format(t.line, t.column, e.mkString(", "), t.value))
         System.exit(-1)
       }
       case Left(EOFError(e))         => {
-        println("PARSER ERROR: expecting %s, got unexpected end of file"
-                  .format(e.mkString(", ")))
+        Console.err.println("PARSER ERROR: expecting %s, got unexpected end of file"
+                              .format(e.mkString(", ")))
         System.exit(-1)
       }
       case _                         => Unit
@@ -65,7 +65,7 @@ object Compiler {
     println("writing file: " + dotFileName)
     writeFile(dotFileName, AST.dotify(program, baseName, typeMap, okMap))
     if ( !isWellTyped(okMap) ) {
-      println("TYPE ERROR DETECTED")
+      Console.err.println("TYPE ERROR DETECTED")
       System.exit(-2)
     }
   }
