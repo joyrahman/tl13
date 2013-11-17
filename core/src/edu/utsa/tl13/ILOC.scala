@@ -30,6 +30,14 @@ object ILOC {
     /** Moves the current block to the set of built/completed blocks.
       Replaces the current block with a new, empty block */
     def newBlock(label: Int) = copy(blocks = blocks + currBlock, currBlock = Block(label, Vector()))
+    /** Sets the current block to the specified label. Throws an exception if it doesn't exist */
+    def setCurrBlock(label: Int) = {
+      val bs = this.blocks + this.currBlock
+      val maybeB = bs.find(_.label == label)
+      val b = if (maybeB.isEmpty) throw new Exception("setCurrBlock: couldn't find block with label: " + label)
+              else maybeB.get
+      copy(blocks = bs - b, currBlock = b)
+    }
   }
 
   /** Represents an ILOC instruction */
@@ -183,17 +191,17 @@ object ILOC {
     val (r1, newState0) = ilocifyExpr(ifStmt.expr, state)
     val l2 = thenLabel
     val l3 = if (elseLabel.isEmpty) afterLabel else elseLabel.get
-    val newState1 = newState0.appendInstruction(cbr(r1, l2, l3)).newBlock(l2)
-    val newLabel = if (elseLabel.isEmpty) afterLabel else elseLabel.get
-    val newState2 = ilocifyStatementSeq(ifStmt.thn, newState1)
-      .appendInstruction(jumpI(afterLabel))
-      .newBlock(newLabel)
-
-    if (ifStmt.els.isEmpty)
-      newState2
-    else ilocifyStatementSeq(ifStmt.els.get, newState2)
-      .appendInstruction(jumpI(afterLabel))
-      .newBlock(afterLabel)
+    val newState1 = newState0.appendInstruction(cbr(r1, l2, l3))
+    val newState2 = if (elseLabel.isEmpty) newState1 else newState1.newBlock(elseLabel.get)
+    val newState3 = newState2.newBlock(afterLabel).newBlock(thenLabel)
+    val newState4 = ilocifyStatementSeq(ifStmt.thn, newState3).appendInstruction(jumpI(afterLabel))
+    if (elseLabel.isEmpty) {
+      newState4.setCurrBlock(afterLabel)
+    } else {
+      val newState5 = newState4.setCurrBlock(elseLabel.get)
+      ilocifyStatementSeq(ifStmt.els.get, newState5)
+        .appendInstruction(jumpI(afterLabel)).setCurrBlock(afterLabel)
+    }
   }
 
   /** Turns an AST While into ILOC instruction(s) */
@@ -204,11 +212,11 @@ object ILOC {
 
     val newState0 = state.appendInstruction(jumpI(exprLabel)).newBlock(exprLabel)
     val (r, newState1) = ilocifyExpr(whileStmt.expr, newState0)
-    val newState2 = newState1.appendInstruction(cbr(r, ssLabel, afterLabel)).newBlock(ssLabel)
+    val newState2 = newState1.appendInstruction(cbr(r, ssLabel, afterLabel))
+      .newBlock(afterLabel).newBlock(ssLabel)
 
     ilocifyStatementSeq(whileStmt.stmts, newState2)
-      .appendInstruction(jumpI(exprLabel))
-      .newBlock(afterLabel)
+      .appendInstruction(jumpI(exprLabel)).setCurrBlock(afterLabel)
   }
 
   /** Turns an AST Program into ILOC instruction(s) */
@@ -288,6 +296,7 @@ object ILOC {
 
    print( ilocifyWhile(While(Op("!=", Num("1"), Num("2")), StatementSeq()), state) )
    print( ilocifyWhile(While(Op("!=", Num("1"), Num("2")), StatementSeq(WriteInt(Num("3")))), state) )
+   print( ilocifyWhile(While(Num("1"), StatementSeq(While(Num("2"), StatementSeq()))), state) )
 
    var decls = Decls(Decl("X", TL13Int()), Decl("Y", TL13Int()))
    print( ilocifyProgram(Program(decls, StatementSeq())) )
