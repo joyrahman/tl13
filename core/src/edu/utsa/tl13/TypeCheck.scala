@@ -6,19 +6,19 @@ import Parse._
 object TypeCheck {
 
   /** Lookup table for node types */
-  type TypeMap = Map[Node,Type]
+  type TypeMap = Map[ASTNode,Type]
 
   object TypeMap {
     /** Creates a [[TypeMap]] */
-    def apply(ps: (Node,Type)*) = Map[Node,Type](ps:_*)
+    def apply(ps: (ASTNode,Type)*) = Map[ASTNode,Type](ps:_*)
   }
 
   /** Lookup table for nodes being well typed */
-  type TypeOkMap = Map[Node,Boolean]
+  type TypeOkMap = Map[ASTNode,Boolean]
 
   object TypeOkMap {
     /** Creates a [[TypeOkMap]] */
-    def apply(ps: (Node,Boolean)*) = Map[Node,Boolean](ps:_*)
+    def apply(ps: (ASTNode,Boolean)*) = Map[ASTNode,Boolean](ps:_*)
   }
 
   /** Calculates the type of a node
@@ -27,7 +27,7 @@ object TypeCheck {
     * @param decls The [[Program]]'s declarations
     * @return The node's [[Type]]
     */
-  private def nodeType(node: Node, decls: Decls): Type = node match {
+  private def nodeType(node: ASTNode, decls: Decls): Type = node match {
       case Decl(_,t)                                     => t
       case Op(o,_,_) if o.matches("=|!=|<|>|<=|>=")      => TL13Bool()
       case Op(o,_,_) if o.matches("\\+|\\-|\\*|div|mod") => TL13Int()
@@ -46,7 +46,7 @@ object TypeCheck {
     * @param okMap Map containing necessary child information
     * @return true if the node is well-typed
     */
-  private def typeOk(node: Node, decls: Decls, typeMap: TypeMap, okMap: TypeOkMap): Boolean = node match {
+  private def typeOk(node: ASTNode, decls: Decls, typeMap: TypeMap, okMap: TypeOkMap): Boolean = node match {
       case ReadInt(i)      => okMap(i) && typeMap(i) == TL13Int()
       case WriteInt(e)     => okMap(e) && typeMap(e) == TL13Int()
       case If(e, _, _)     => okMap(e) && typeMap(e) == TL13Bool()
@@ -70,7 +70,7 @@ object TypeCheck {
 
   /** Builds a [[TypeOkMap]] from a [[Parse.Program]] */
   private def mkTypeOkMap(program: Program, typeMap: TypeMap): TypeOkMap =
-    program.postwalk(Map[Node,Boolean]()) {
+    program.postwalk(Map[ASTNode,Boolean]()) {
       (okMap,node) => okMap + (node -> typeOk(node, program.decls, typeMap, okMap))
     }
 

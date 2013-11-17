@@ -22,44 +22,44 @@ object Parse {
   case class EOFError(expected: Set[String]) extends ParseError
 
   /** Base class for every node in the AST */
-  abstract class Node {
-    /** Calls a function on every [[Parse.Node]] and sub-node in a pre-order traversal
+  abstract class ASTNode {
+    /** Calls a function on every [[Parse.ASTNode]] and sub-node in a pre-order traversal
       *
       * @param acc Initial value that is passed to each function
       * @param f Function to call on each node. The function is passed a node and the current
       *          accumulated state
       * @return The accumulated state
       */
-    def prewalk[A](acc: A)(f: (A, Node) => A): A = {
-      def aux(acc: A, cs: Seq[Node]): A = {
+    def prewalk[A](acc: A)(f: (A, ASTNode) => A): A = {
+      def aux(acc: A, cs: Seq[ASTNode]): A = {
         if (cs.isEmpty) acc
         else            aux(cs.head.prewalk(acc)(f), cs.tail)
       }
       aux(f(acc,this), children)
     }
-    /** Calls a function on every [[Parse.Node]] and sub-node in a post-order traversal
+    /** Calls a function on every [[Parse.ASTNode]] and sub-node in a post-order traversal
       *
       * @param acc Initial value that is passed to each function
       * @param f Function to call on each node. The function is passed a node and the current
       *          accumulated state
       * @return The accumulated state
       */
-    def postwalk[A](acc: A)(f: (A, Node) => A): A = {
-      def aux(acc: A, cs: Seq[Node]): A = {
+    def postwalk[A](acc: A)(f: (A, ASTNode) => A): A = {
+      def aux(acc: A, cs: Seq[ASTNode]): A = {
         if (cs.isEmpty) acc
         else            aux(cs.head.postwalk(acc)(f), cs.tail)
       }
       f(aux(acc, children), this)
     }
     /** Returns the child nodes of this node */
-    def children: Seq[Node]
+    def children: Seq[ASTNode]
   }
 
   /** Represents an expression. Can be a num, boollit, ident, or operation */
-  abstract class Expr extends Node
+  abstract class Expr extends ASTNode
 
   /** Represents a statement. Can be an if, while, assignment, or writeInt */
-  abstract class Statement extends Node
+  abstract class Statement extends ASTNode
 
   /** Represents a number
     *
@@ -99,12 +99,12 @@ object Parse {
     *
     * @param stmts The sequences
     */
-  case class StatementSeq(stmts: Statement*) extends Node {
+  case class StatementSeq(stmts: Statement*) extends ASTNode {
     def children = stmts
   }
 
   /** Represents a type */
-  abstract class Type extends Node {
+  abstract class Type extends ASTNode {
     def children = Vector()
   }
 
@@ -131,7 +131,7 @@ object Parse {
     * @param value The value of the declaration
     * @param typ The [[Type]] of the declaration
     */
-  case class Decl(value: String, typ: Type) extends Node {
+  case class Decl(value: String, typ: Type) extends ASTNode {
     def children = Vector(typ)
   }
 
@@ -139,7 +139,7 @@ object Parse {
     *
     * @param decls The declarations
     */
-  case class Decls(decls: Decl*) extends Node {
+  case class Decls(decls: Decl*) extends ASTNode {
     def children = decls
   }
 
@@ -148,7 +148,7 @@ object Parse {
     * @param decls The program declarations
     * @param stmts The statements in the program
     */
-  case class Program(decls: Decls, stmts: StatementSeq) extends Node {
+  case class Program(decls: Decls, stmts: StatementSeq) extends ASTNode {
     def children = Vector(decls, stmts)
   }
 
@@ -177,7 +177,7 @@ object Parse {
     */
   case class If(expr: Expr, thn: StatementSeq, els: Option[StatementSeq]) extends Statement {
     def children = {
-      var v = Vector[Node](expr, thn)
+      var v = Vector[ASTNode](expr, thn)
       if (els.isEmpty)
         v
       else

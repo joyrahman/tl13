@@ -18,10 +18,10 @@ object DOT {
       */
     case class Graph(val name: String, val items: Item*) {
       override def toString = ("digraph %s {\n"                          +
-                                 "  ordering=out;\n"                       +
-                                 "  node [shape = box, style = filled];\n" +
-                                 "%s"                                      +
-                                 "}").format(name, items.mkString)
+                               "  ordering=out;\n"                       +
+                               "  node [shape = box, style = filled];\n" +
+                               "%s"                                      +
+                               "}").format(name, items.mkString)
     }
 
     /** Represents either a relationship or an attribute in a DOT graph */
@@ -46,12 +46,12 @@ object DOT {
       override def toString = "  %s\n".format(nodes.mkString(" -> "))
     }
 
-    /** Creates a map of [[Parse.Node]]'s to their children */
-    private def mkLinkMap(node: Node): Map[Node,Seq[Node]] =
-      node.prewalk(Map[Node,Seq[Node]]()) { (m,n) => m + (n -> n.children) }
+    /** Creates a map of [[Parse.ASTNode]]'s to their children */
+    private def mkLinkMap(node: ASTNode): Map[ASTNode,Seq[ASTNode]] =
+      node.prewalk(Map[ASTNode,Seq[ASTNode]]()) { (m,n) => m + (n -> n.children) }
 
     /** Gets a label for a DOT graph node */
-    private def label(node: Node): String = node match {
+    private def label(node: ASTNode): String = node match {
         case _: ReadInt      => ":= readInt"
         case _: AsgnExpr     => ":="
         case _: If           => "if"
@@ -70,8 +70,8 @@ object DOT {
         case Num(v)          => v
       }
 
-    /** Gets a string representation of a [[Parse.Node]] suitable for use in a DOT graph */
-    private def mkDOTNode(node: Node): String = ("n" + node.hashCode).replaceAll("n-", "n_")
+    /** Gets a string representation of a [[Parse.ASTNode]] suitable for use in a DOT graph */
+    private def mkDOTNode(node: ASTNode): String = ("n" + node.hashCode).replaceAll("n-", "n_")
 
     /** Creates DOT notation for a [[Parse.Program]]
       *
@@ -160,7 +160,7 @@ object DOT {
                  .mkString(before, after+before, after))
     }
 
-    /** Gets a string representation of a [[Parse.Node]] suitable for use in a DOT graph */
+    /** Gets a string representation of a [[Parse.ASTNode]] suitable for use in a DOT graph */
     private def mkDOTNode(block: Block): String = ("n" + block.hashCode).replaceAll("n-", "n_")
 
     /** Converts an ILOC instruction to a string for the DOT graph */

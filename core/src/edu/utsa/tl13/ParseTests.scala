@@ -7,8 +7,8 @@ import UnitTest._
 /** [[Parse]] unit tests */
 object ParseTests {
 
-  /** Dummy [[Parse.Node]] for testing */
-  case class Dummy(i: Int, x: Option[Dummy], y: Option[Dummy]) extends Node {
+  /** Dummy [[Parse.ASTNode]] for testing */
+  case class Dummy(i: Int, x: Option[Dummy], y: Option[Dummy]) extends ASTNode {
     def children = List(x, y).foldLeft(Vector[Dummy]()) {
         (acc,node) => if (!node.isEmpty) acc :+ node.get else acc
       }
@@ -23,13 +23,13 @@ object ParseTests {
 
 
 
-  /** Tests [[Parse.Node.prewalk]] */
+  /** Tests [[Parse.ASTNode.prewalk]] */
   val prewalkTests =
     Test("prewalk", () => assertEqual(dummyTree.prewalk(Vector[Int]())
                                         { (acc,node) => acc :+ (node.asInstanceOf[Dummy].i) },
                                       Vector(1,2,3,4,5)))
 
-  /** Tests [[Parse.Node.postwalk]] */
+  /** Tests [[Parse.ASTNode.postwalk]] */
   val postwalkTests =
     Test("postwalk", () => assertEqual(dummyTree.postwalk(Vector[Int]())
                                          { (acc,node) => acc :+ (node.asInstanceOf[Dummy].i) },
@@ -327,47 +327,47 @@ object ParseTests {
   private def mkParseSuccess[A](
     parse: Parser[A],
     input: String,
-    expected: Node,
+    expected: ASTNode,
     remaining: List[Token] = List()
   ) : Test = Test(input, () => assertEqual(parse(input), Right((expected, remaining))))
 
   private def mkParseProgramSuccess(input: String, expected: Program, remaining: List[Token] = List()) : Test =
     mkParseSuccess(parseProgram, input, expected, remaining)
 
-  private def mkParseDeclsSuccess(input: String, expected: Node, remaining: List[Token] = List()): Test =
+  private def mkParseDeclsSuccess(input: String, expected: ASTNode, remaining: List[Token] = List()): Test =
     mkParseSuccess(parseDeclarations, input, expected, remaining)
 
-  private def mkParseStmtSeqSuccess(input: String, expected: Node, remaining: List[Token] = List()): Test =
+  private def mkParseStmtSeqSuccess(input: String, expected: ASTNode, remaining: List[Token] = List()): Test =
     mkParseSuccess(parseStatementSeq, input, expected, remaining)
 
-  private def mkParseStmtSuccess(input: String, expected: Node, remaining: List[Token] = List()): Test =
+  private def mkParseStmtSuccess(input: String, expected: ASTNode, remaining: List[Token] = List()): Test =
     mkParseSuccess(parseStatement, input, expected, remaining)
 
-  private def mkParseAsgnSuccess(input: String, expected: Node, remaining: List[Token] = List()): Test =
+  private def mkParseAsgnSuccess(input: String, expected: ASTNode, remaining: List[Token] = List()): Test =
     mkParseSuccess(parseAssignment, input, expected, remaining)
 
-  private def mkParseIfSuccess(input: String, expected: Node, remaining: List[Token] = List()): Test =
+  private def mkParseIfSuccess(input: String, expected: ASTNode, remaining: List[Token] = List()): Test =
     mkParseSuccess(parseIfStatement, input, expected, remaining)
 
-  private def mkParseElseSuccess(input: String, expected: Node, remaining: List[Token] = List()): Test =
+  private def mkParseElseSuccess(input: String, expected: ASTNode, remaining: List[Token] = List()): Test =
     mkParseSuccess(parseElseClause, input, expected, remaining)
 
-  private def mkParseWhileSuccess(input: String, expected: Node, remaining: List[Token] = List()): Test =
+  private def mkParseWhileSuccess(input: String, expected: ASTNode, remaining: List[Token] = List()): Test =
     mkParseSuccess(parseWhileStatement, input, expected, remaining)
 
-  private def mkParseWriteIntSuccess(input: String, expected: Node, remaining: List[Token] = List()): Test =
+  private def mkParseWriteIntSuccess(input: String, expected: ASTNode, remaining: List[Token] = List()): Test =
     mkParseSuccess(parseWriteInt, input, expected, remaining)
 
-  private def mkParseExprSuccess(input: String, expected: Node, remaining: List[Token] = List()): Test =
+  private def mkParseExprSuccess(input: String, expected: ASTNode, remaining: List[Token] = List()): Test =
     mkParseSuccess(parseExpression, input, expected, remaining)
 
-  private def mkParseSimpleExprSuccess(input: String, expected: Node, remaining: List[Token] = List()): Test =
+  private def mkParseSimpleExprSuccess(input: String, expected: ASTNode, remaining: List[Token] = List()): Test =
     mkParseSuccess(parseSimpleExpression, input, expected, remaining)
 
-  private def mkParseTermSuccess(input: String, expected: Node, remaining: List[Token] = List()): Test =
+  private def mkParseTermSuccess(input: String, expected: ASTNode, remaining: List[Token] = List()): Test =
     mkParseSuccess(parseTerm, input, expected, remaining)
 
-  private def mkParseFactorSuccess(input: String, expected: Node, remaining: List[Token] = List()): Test =
+  private def mkParseFactorSuccess(input: String, expected: ASTNode, remaining: List[Token] = List()): Test =
     mkParseSuccess(parseFactor, input, expected, remaining)
 
   // helper functions for failed parses
