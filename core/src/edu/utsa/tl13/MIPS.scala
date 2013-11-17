@@ -123,7 +123,7 @@ object MIPS {
 
   /** Convert ILOC blocks to MIPS blocks */
   def mipsifyBlocks(blocks: Seq[ILOC.Block]): Seq[Block] =
-    blocks.map(b => Block(b.label, b.instrs.flatMap(i => mipsifyInstruction(i)):_*))
+    blocks.sortWith(_.label < _.label).map(b => Block(b.label, b.instrs.flatMap(i => mipsifyInstruction(i)):_*))
 
   /** Convert an ILOC instruction to equivalent MIPS instruction(s) */
   def mipsifyInstruction(instr: ILOC.Instruction): Seq[Instruction] = instr match {
