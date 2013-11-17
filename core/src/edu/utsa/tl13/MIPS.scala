@@ -158,8 +158,7 @@ object MIPS {
         Vector(li("$v0", 5), syscall(), add("$t0", "$v0", "$zero"), sw("$t0", vregToFp(r1)))
       case ILOC.i2i(r1, r2) =>
         Vector(lw("$t0", vregToFp(r1)), add("$t0", "$t0", "$zero"), sw("$t0", vregToFp(r2)))
-      case ILOC.cbr(r1, b2, b3) =>
-        Vector(bne("$t0", "$zero", b2), sw("$t0", vregToFp(r1)), j(b3))
+      case ILOC.cbr(r1, b2, b3) => Vector(lw("$t0", vregToFp(r1)), bne("$t0", "$zero", b2), j(b3))
       case ILOC.jumpI(b1) => Vector(j(b1))
       case ILOC.exit() => Vector(li("$v0", 10), syscall())
     }
