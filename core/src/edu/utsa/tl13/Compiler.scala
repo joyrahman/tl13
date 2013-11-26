@@ -63,7 +63,7 @@ object Compiler {
   private def handleTypeCheck(program: Parse.Program, baseName: String, typeMap :TypeMap, okMap: TypeOkMap) {
     val dotFileName = baseName + ".ast.dot"
     println("writing file: " + dotFileName)
-    writeFile(dotFileName, AST.dotify(program, baseName, typeMap, okMap))
+    writeFile(dotFileName, AST.dotify(program, baseName.substring(baseName.lastIndexOf('/')+1), typeMap, okMap))
     if ( !isWellTyped(okMap) ) {
       Console.err.println("TYPE ERROR DETECTED")
       System.exit(-2)
@@ -75,7 +75,7 @@ object Compiler {
     val blocks = ilocifyProgram(program)
     val dotFileName = baseName + ".cfg.dot"
     println("writing file: " + dotFileName)
-    writeFile(dotFileName, DOT.ILOC.dotify(blocks, baseName))
+    writeFile(dotFileName, DOT.ILOC.dotify(blocks, baseName.substring(baseName.lastIndexOf('/')+1)))
     blocks.toSeq
   }
 
@@ -92,7 +92,7 @@ object Compiler {
       println("You must pass in a file ending with .tl13")
     } else {
       try {
-        val baseName = args(0).substring(args(0).lastIndexOf("/") + 1, args(0).length - 5)
+        val baseName = args(0).substring(0, args(0).length - 5)
         val src = readFile(args(0))
 
         val program = parseProgram(tokenize(src))
