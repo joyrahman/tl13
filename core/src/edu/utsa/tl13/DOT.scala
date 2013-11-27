@@ -71,7 +71,17 @@ object DOT {
       }
 
     /** Gets a string representation of a [[Parse.ASTNode]] suitable for use in a DOT graph */
-    private def mkDOTNode(node: ASTNode): String = ("n" + node.hashCode).replaceAll("n-", "n_")
+    private def mkDOTNode(node: ASTNode): String = ("n" + node.uniqHashCode).replaceAll("n-", " n_")
+
+    /** Determines what DOT color should be used given an AST node */
+    private def nodeToColor(node: ASTNode, typeMap: TypeMap, okMap: TypeOkMap) = okMap(node) match {
+        case false => "/pastel13/1"
+        case true  => typeMap(node) match {
+          case TL13Int()  => "/pastel13/3"
+          case TL13Bool() => "/pastel13/2"
+          case _          => "/x11/lightgrey"
+        }
+      }
 
     /** Creates DOT notation for a [[Parse.Program]]
       *
@@ -86,16 +96,12 @@ object DOT {
       val items = linkMap.foldLeft(Vector[Item]()) {
           (is,kv) => kv match {
             case (p, cs) => {
-              val color = okMap(p) match {
-                  case false => "/pastel13/1"
-                  case true  => typeMap(p) match {
-                    case TL13Int()  => "/pastel13/3"
-                    case TL13Bool() => "/pastel13/2"
-                    case _          => "/x11/lightgrey"
-                  }
-                }
+              val color = nodeToColor(p, typeMap, okMap)
               cs.foldLeft(is :+ Attribute(mkDOTNode(p), label(p), color)) {
-                (is,c) => is :+ Relationship(mkDOTNode(p), mkDOTNode(c))
+                (is,c) => {
+                  val color = nodeToColor(c, typeMap, okMap)
+                  is :+ Attribute(mkDOTNode(c), label(c), color) :+ Relationship(mkDOTNode(p), mkDOTNode(c))
+                }
               }
             }
           }
@@ -117,16 +123,16 @@ object DOT {
       */
     case class Graph(val name: String, val entry: String, val exit: String, val items: Item*) {
       override def toString = ("digraph %s {\n"             +
-                               "  node [shape = none];\n"   +
-                               "  edge [tailport = s];\n"   +
-                               "  entry\n"                  +
-                               "  subgraph cluster {\n"     +
-                               "    color=\"/x11/white\"\n" +
-                               "%s"                         +
-                               "  }\n"                      +
-                               "  entry -> %s\n"            +
-                               "  %s -> exit\n"             +
-                               "}").format(name, items.mkString, entry, exit)
+                                 "  node [shape = none];\n"   +
+                                 "  edge [tailport = s];\n"   +
+                                 "  entry\n"                  +
+                                 "  subgraph cluster {\n"     +
+                                 "    color=\"/x11/white\"\n" +
+                                 "%s"                         +
+                                 "  }\n"                      +
+                                 "  entry -> %s\n"            +
+                                 "  %s -> exit\n"             +
+                                 "}").format(name, items.mkString, entry, exit)
     }
 
     /** Represents either a relationship or an attribute in a DOT graph */

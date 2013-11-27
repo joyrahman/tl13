@@ -23,6 +23,10 @@ object Parse {
 
   /** Base class for every node in the AST */
   abstract class ASTNode {
+    /** Object used in order to have a unique hash code, since case classes hash by value */
+    val _obj = new Object()
+    /** The unique hash code of the node */
+    val uniqHashCode = _obj.hashCode
     /** Calls a function on every [[Parse.ASTNode]] and sub-node in a pre-order traversal
       *
       * @param acc Initial value that is passed to each function
