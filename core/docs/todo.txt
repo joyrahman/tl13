@@ -1,0 +1,10 @@
+more unit testing:
+     type checking
+     ILOC
+     MIPS
+
+finish ssa branch
+
+finish parse-rewrite branch (applicative style)
+
+split AST If case class into If and IfElse case classes
