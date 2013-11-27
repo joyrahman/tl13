@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>CS 5363, Fall 2013, UTSA, Compiler Project, TL13 Types</title>
+  <link rel="stylesheet" href="course.css" type="text/css" />
+  <meta http-equiv="cache-control" content="max-age=300">
+</head>
+
+<body>
+<div id="header">
+
+  <h1>CS 5363: Programming Languages and Compilers</h1>
+  The University of Texas at San Antonio<br />
+  Fall Semester, 2013<br />
+
+</div>
+<hr />
+
+<div id="body">
+  <h1><a href="overview.html">TL13 Language</a><br/>
+  Informal Type Rules</h1>
+  <ol>
+    <li> The operands of all OP2, OP3, and OP4 operators must be integers
+    <li> The OP2 and OP3 operators create an integer result.
+    <li> The OP4 operators create boolean results.
+    <li> All variables must be declared with a particular type.
+    <li> Each variables may only be declared once.
+    <li> The left-hand of assignment must be a variable, and the right-hand
+      side must be an expression of the variable's type.
+    <li> When used as a value, a variable's type is its declared type.
+    <li> Only integer variables may be assigned the result of readInt.
+    <li> writeInt's expression must evaluate to an integer.
+    <li> The expression guarding if-statements and while-loops must be boolean.
+    <li> The literals "false" and "true" are boolean constants.
+    <li> The literal numbers 0 through 2147483647 are integer
+         constants.  Numbers outside of that range should be flagged as
+         illegal.
+  </ol>
+
+<h2>Errata/Clarifications</h2>
+  <ul>
+  </ul>
+
+<div id="footer">
+  CS 5363<br />  <a href="http://www.cs.utsa.edu/~vonronne">Jeffery von Ronne</a><br />
+  <a href="http://www.cs.utsa.edu/">Department of Computer Science</a><br />
+  <a href="http://www.utsa.edu/">The University of Texas at San Antonio</a><br />
+</div>
+</body>
+</html>

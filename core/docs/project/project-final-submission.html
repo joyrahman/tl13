@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>CS 5363, Fall 2013, UTSA, Compiler Project, TL13/Compiler Extensions </title>
+  <link rel="stylesheet" href="course.css" type="text/css" />
+  <meta http-equiv="cache-control" content="max-age=300">
+</head>
+
+<body>
+<div id="header">
+
+  <h1>CS 5363: Programming Languages and Compilers</h1>
+  The University of Texas at San Antonio<br />
+  Fall Semester, 2013<br />
+</div>
+<hr />
+<div id="body">
+  <h1><a href="index.html">CS 5363: TL13 Compiler Project</a>, Final Submission</h1>
+
+  <p>Deadline: 5pm, Saturday, December 7, 2013<br />
+  </p>
+
+  <h2>Final Project Submission</h2>
+  <p>In the previous phase of the project you have completed a 
+    non-optimizing compiler for the core TL13 language that can
+    produce semantically equivalent MIPS assembly code.  
+  </p>
+  <p>For the final submission deadline, you may <strong>either</strong>:</p>
+    <ol>
+      <li />continue to work on your compiler and submit it for
+        regrading by December 7, <strong>or</strong>
+      <li />choose to implement <strong>one</strong> of the 
+        language or optimization extensions listed below.
+    </ol>
+
+  <h2>Option 1: Resubmission of Core</h2>
+  <p>If you choose the former, your will receive a new score (out of
+    300 points) for the entire core compiler that (if higher) will 
+    replace your Review I, Review II, Review III, and Review IV 
+    scores.</p>
+  <p>In determining whether your final course grade is at
+    least a 'B', your overall course score will be computed as if 
+    you had received 50/50 points on the extension.  In determining 
+    whether your final course grade is at least an 'A', your score 
+    will be computed as if you had received 0/50 points on the extension.
+  </p>
+    
+
+  <h2>Option 2: TL13 Language Extension or Compiler Optimization</h2>
+  <p>If you choose not to resubmit your core, 
+    you have the opportunity to earn 50 points towards 
+    an 'A' by extending your compiler to support an additional 
+    language feature OR an add additional optimizations.  
+    ('B' grades will be determined as if you earned 50 points
+    on the extensions regardless of whether / how well you do 
+    on the extensions.) Some of the extensions may also include 
+    "bonus" options that allow you to earn more than 50 points.
+  </p>
+  <p>
+    This phase is intentionally less tightly specified and
+    more open ended than those of Parser and Core.  Below is
+    a list of possible extensions and the amount of points that
+    can be earned by successfully completing each extensions.
+    <strong>In you blackboard cover letter, be sure to include all
+    items listed in the submission instructions there.  Make sure
+    that this cover letter clearly indicates which extension you 
+    attempted, its status, any "bonus" items included
+    in your code, and a list of any relevant items included in the 
+    <code>docs</code> directory.</strong>
+  </p>
+
+  <h3>Extensions</h3>
+
+  <h4>Language Extensions</h4>
+
+  Create a revised language description (including lexical categories,
+  context-free grammar, informal type rules, and informal semantics---as
+  appropriate) containing one or more of the following language extensions.  
+  Implement the features so that the compiler in the "extensions" folder
+  can correctly compile the revised language.  Create a test plan describing
+  how the language extensions will be tested, what test cases will be used,
+  and what the result of the testing is.
+
+  <ol>
+    <li/>Support two of the following types: arrays, ML/Scala-style lists, and 
+       ML-style <a href="http://en.wikipedia.org/wiki/Standard_ML#Algebraic_datatypes_and_pattern_matching">algebraic data types</a>
+      <ul>
+      <li/>Bonus: all three of these (including arbitrary combinations)
+      <li/>Bonus: "foreach" loops
+      <li/>Bonus: pattern-matching case statements
+      </ul>
+
+    <li/>Support for recursive procedures.
+      <ul>
+      <li/>Bonus: support for nesting with static scoping
+      <li/>Bonus: support for procedure variables and parameters
+      </ul>
+  </ol>
+
+  <h4>Optimizations and Compiler Extensions</h4>
+  Below is a list of transformations and optimizations that can
+  be implemented in your compiler project for additional credit. 
+  In addition to implementing the code as a pass over the ILOC
+  representation, you should
+  provide a description of the algorithm used (with citations if appropriate),
+  and a description of the testing done (including test inputs and outputs 
+  checked).
+  
+
+  <ol>
+    <li><p>SSA-based optimization phase on the ILOC intermediate representation,
+         including translation into (and out of) SSA form using one of the 
+         following algorithms :
+      <ul>
+        <li>The simplest method is probably to follow <a 
+         href="http://link.springer.com.libweb.lib.utsa.edu/chapter/10.1007%2F3-540-46423-9_8">the 
+         approach of Aycock and Horspool</a>.
+         The method described in this paper is similar to what is
+         described in Cooper 9.3.1, but if you are going to implement
+         it, read the paper.
+        <li>Alternatively, you may use the algorithm in Cooper 9.3.3/9.3.4.
+        <li>The seminal work on SSA construction is <a 
+         href="http://doi.acm.org.libweb.lib.utsa.edu/10.1145/115372.115320">that of Cytron</a>.
+        <li>There's also a <a href="http://doi.acm.org.libweb.lib.utsa.edu/10.1145/1065887.1065890">a 
+            newer algorithm</a> by Das and Ramakrishna that may be worth 
+            considering.
+      </ul>
+      <p>Translation out of SSA form should pay careful attention to semantics
+      of the &phi;-functions, especially their "simultaneous" execution, which
+      leads to the swap problem (Cooper 9.3.5).  Morgan's "Building an 
+      Optimizing Compiler" has a detailed algorithm for handling this.  
+      Contact the instructor if you're interested.  Some of these issue
+      only show up when optimizations are performed in SSA form.
+      </p>
+    <ul>
+    <li><p>Bonus: Implement <a href="http://dx.doi.org.libweb.lib.utsa.edu/10.1002/(SICI)1097-024X(199706)27:6%3C701::AID-SPE104%3E3.0.CO;2-0">SSA/dominator-based value numbering</a></p>
+
+    <li><p>Bonus: Implement constant propagation/folding using the SSA-based 
+             algorithm in Cooper Section 9.3.6
+
+    <li><p>Bonus: useless code elimination using the algorithm 
+        in Cooper Section 10.2.1 and/or useless control flow elimination from
+        Cooper 10.2.2.<br />
+        As a simplification, instead of marking jumps based on the RDF of
+          marked instructions (the last for loop in Figure 10.1(a)), 
+          you may instead consider all jumps/branches to be critical.
+       [Note: even though SSA isn't needed for useless control flow 
+       elimination, you can only earn points for it if you also do SSA.]</p>
+        </p>
+
+    <li><p>Bonus: unreachable code elimination in Cooper Section 10.2.3<br/>
+       To implement this, you will need to extend the language with an
+       "exit/return" statement that terminates program execution completely.
+       [Note: even though this isn't SSA-based, you can only earn points
+       for it if you also do SSA.]</p>
+    </ul>
+
+
+    <li><p>implement Chaitin-Briggs register allocation with live range analysis
+      and interference graph coloring 
+      (Cooper Section 13.4.1, 13.4.3, 13.4.5)</p>
+      <ul>
+        <li/>Bonus: no reserved spill registers
+        <li/>Bonus: coallescing
+        <li/>Bonus: live-range splitting
+      </ul>
+  </ol>
+
+  <h3>Grading Criteria</h3>
+
+  <p>The grade for a student's extension will be assessed
+  according to the following rubric:</p>
+  <ul>
+    <li>50 points: 
+      Core and Extension code has no significant flaws.  Students are 
+      responsible for demonstrating evidence of this by having adequate testing
+      that the code works correctly or nearly correctly for nearly
+      all test cases.  TA/instructor test cases and code inspection
+      may also be used in assessment.
+    <li>40 points: 
+      Core compiler functioned correctly on the "real programs".
+      Extension code has minor flaws, but correctly handles the 
+       "common cases".  
+      Students are responsible for demonstrating evidence of this by 
+      having adequate testing and showing that the code implements
+      the documented extensions.
+      TA/instructor test cases and code inspection may also be used 
+      in assessment.
+    <li>20 points: 
+      Core compiler functioned correclty on the "real programs".
+      Extension code is incomplete or has major flaws, but the extension
+      have been documented (as described above) and the submission
+      includes at least two non-trivial test cases that shows the
+      extension working.
+  </ul>
+
+  <p>Up to 50 additonal points may be awarded, at the discretion of the
+  instructional staff, for extensions that go beyond the minimum requirements
+  listed.  (Suggested "bonus" items are listed for most extensions.)
+
+  <strong><p>No points will be awarded for any extensions unless the 
+  extension code is submitted according to the instructions and the core
+  compiler works correctly.</strong>  The core compiler will be considered 
+  to work correctly if it... </p>
+  <ul>
+   <li>builds according to the build instructions, and
+   <li>produces executing SPIM code for 
+     <a href="language/overview.html#examples">all provided test programs</a>, and
+   <li>produces correctly executing SPIM code for nearly all of the provided
+     test programs in each category, especially 
+     the "real" programs.
+  </ul>
+
+  <h3>Submission Mechanics and Packaging</h3>
+  <p>Please refer to the <a href="getting-started.html">the
+  getting started</a> for information on how to prepare the
+  git commit containing your source code for grading.
+
+  <h2 id="samples">Testing</h2>
+  <p>You are also required to adequately test your compiler optimizations
+  and language extensions.  Please submit
+  your test cases along with your source code and document the
+  current state of your compiler based on your own testing.
+  In your documentation for each extensions, please include
+  a description of which test cases you developed to specifically
+  test those extensions.</p>
+
+  <p>Hint: if you implement multiple optimization SSA optimizations,
+  it is advisable to include a command-line switch that 
+  activates/deactivates individual optimizations when feasible.
+  This will allow, for example, full points to be assigned for 
+  "optimization 1" even if "optimization 2" crashes for some
+  test cases. Otherwise, you may lose points for "optimization 1"
+  because "optimization 2" breaks a test case.
+  </p>
+
+  <h2>Errata/Clarifications</h2>
+
+  <p>There may need to be corrections, clarifications, or other modifications 
+  to these instructions, you are responsible for monitoring the class web 
+  site and listening during lecture for announcements related to this 
+  assignment.</p>
+
+  <ul>
+  </ul>
+
+<div id="footer">
+  CS 5363<br />  <a href="http://www.cs.utsa.edu/~vonronne">Jeffery von Ronne</a><br />
+  <a href="http://www.cs.utsa.edu/">Department of Computer Science</a><br />
+  <a href="http://www.utsa.edu/">The University of Texas at San Antonio</a><br />
+</div>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>CS 5363, Fall 2013, UTSA, Compiler Project, TL13 Syntax</title>
+  <link rel="stylesheet" href="course.css" type="text/css" />
+  <meta http-equiv="cache-control" content="max-age=300">
+</head>
+
+<body>
+<div id="header">
+
+  <h1>CS 5363: Programming Languages and Compilers</h1>
+  The University of Texas at San Antonio<br />
+  Fall Semester, 2013<br />
+
+</div>
+<hr />
+
+<div id="body">
+  <h1><a href="overview.html">TL13 Language</a><br/>
+    Language Syntax</h1>
+
+  <h2>Comments</h2>
+  The first occurrence of the character "%" on a line denotes the start of
+  a comment that extends to the end of that line.  For purposes of determining
+  the lexical elements of the source file, the entire comment will be treated
+  as if it were whitespace.
+
+  <h2>Lexical Elements</h2>
+  <p>All TL13 lexical elements (a.k.a. tokens) are separated by spaces and 
+  should match one of the categories below.</p>
+
+  <p>If the definition of a lexical element is in quotes, then it
+  is meant to match exactly, the contained string.  Otherwise, it is
+  a regular expression.  Square brackets in regular expressions are
+  used as an abbreviation for matching ranges of letters.  For example,
+  [0-9] matches any digit, and [a-zA-Z] matches any English letter
+  in capital or lower case.
+  </p>
+
+<p>Numbers, Literals, and Identifiers:</p>
+<ul>
+<li>num = [1-9][0-9]*|0
+<li>boollit = false|true
+<li>ident = [A-Z][A-Z0-9]*
+</ul>
+
+<p>Symbols and Operators:</p>
+<ul>
+<li>LP = "("
+<li>RP = ")"
+<li>ASGN = ":="
+<li>SC = ";"
+<li>OP2 = "*" | "div" | "mod"
+<li>OP3 = "+" | "-"
+<li>OP4 = "=" | "!=" | "<" | ">" | "<=" | ">="
+</ul>
+
+<p>Keywords:</p>
+<ul>
+<li>IF = "if"
+<li>THEN = "then"
+<li>ELSE = "else"
+<li>BEGIN = "begin"
+<li>END = "end"
+<li>WHILE = "while"
+<li>DO = "do"
+<li>PROGRAM = "program"
+<li>VAR = "var"
+<li>AS = "as"
+<li>INT = "int"
+<li>BOOL = "bool"
+</ul>
+
+<p>Built-in Procedures:</p>
+<ul>
+<li>WRITEINT = "writeInt"
+<li>READINT = "readInt"
+</ul>
+
+<h2>BNF Grammar</h2>
+<pre>
+<i>&lt;program&gt;</i> ::= PROGRAM <i>&lt;declarations&gt;</i> BEGIN <i>&lt;statementSequence&gt;</i> END
+
+<i>&lt;declarations&gt;</i> ::= VAR ident AS <i>&lt;type&gt;</i> SC <i>&lt;declarations&gt;</i>
+               | &epsilon;
+
+<i>&lt;type&gt;</i> ::= INT | BOOL
+
+<i>&lt;statementSequence&gt;</i> ::= <i>&lt;statement&gt;</i> SC <i>&lt;statementSequence&gt;</i>
+                    | &epsilon;
+
+<i>&lt;statement&gt;</i> ::= <i>&lt;assignment&gt;</i>
+            | <i>&lt;ifStatement&gt;</i>
+            | <i>&lt;whileStatement&gt;</i>
+            | <i>&lt;writeInt&gt;</i>
+
+<i>&lt;assignment&gt;</i> ::= ident ASGN <i>&lt;expression&gt;</i>
+             | ident ASGN READINT
+
+<i>&lt;ifStatement&gt;</i> ::= IF <i>&lt;expression&gt;</i> THEN <i>&lt;statementSequence&gt;</i> <i>&lt;elseClause&gt;</i> END
+
+<i>&lt;elseClause&gt;</i> ::= ELSE <i>&lt;statementSequence&gt;</i>
+             | &epsilon;
+
+<i>&lt;whileStatement&gt;</i> ::= WHILE <i>&lt;expression&gt;</i> DO <i>&lt;statementSequence&gt;</i> END
+
+<i>&lt;writeInt&gt;</i> ::= WRITEINT <i>&lt;expression&gt;</i>
+
+<i>&lt;expression&gt;</i> ::= <i>&lt;simpleExpression&gt;</i>
+             | <i>&lt;simpleExpression&gt;</i> OP4 <i>&lt;simpleExpression&gt;</i>
+
+<i>&lt;simpleExpression&gt;</i> ::= <i>&lt;term&gt;</i> OP3 <i>&lt;term&gt;</i>
+                   | <i>&lt;term&gt;</i>
+
+<i>&lt;term&gt;</i> ::= <i>&lt;factor&gt;</i> OP2 <i>&lt;factor&gt;</i>
+       | <i>&lt;factor&gt;</i>
+
+<i>&lt;factor&gt;</i> ::= ident
+         | num
+         | boollit
+         | LP <i>&lt;expression&gt;</i> RP
+
+</pre>
+
+  <h2>Errata/Clarifications</h2>
+  <ul>
+  </ul>
+
+<div id="footer">
+  CS 5363<br />  <a href="http://www.cs.utsa.edu/~vonronne">Jeffery von Ronne</a><br />
+  <a href="http://www.cs.utsa.edu/">Department of Computer Science</a><br />
+  <a href="http://www.utsa.edu/">The University of Texas at San Antonio</a><br />
+</div>
+</body>
+</html>

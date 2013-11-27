@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>CS 5363, Fall 2013, UTSA, Compiler Project, TL13</title>
+  <link rel="stylesheet" href="course.css" type="text/css" />
+  <meta http-equiv="cache-control" content="max-age=300">
+</head>
+
+<body>
+<div id="header">
+
+  <h1>CS 5363: Programming Languages and Compilers</h1>
+  The University of Texas at San Antonio<br />
+  Fall Semester, 2013<br />
+</div>
+<hr />
+<div id="body">
+  <h1><a href="../index.html">CS 5363: Compiler Project</a><br/>
+    TL13 Language Introduction</h1>
+
+  <p>The TL13 programming language, is based on the P2K language used by 
+  Michael Franz in his Advanced Compiler Construction class at the University
+  of California, Irvine.  The P2K language was a simplified subset of
+  Pascal, and TL13 has been simplified even further, so that you can
+  experience writing an optimizing compiler without getting burdened by
+  all of the complexities and details of a complete, standard programming
+  language.</p>
+
+  <p>Detailed Information is available on TL13's</p>
+  <ul>
+    <li /><a href="bnf.html">Formal Syntax</a>
+    <li /><a href="types.html">Informal Type Rules</a>, and 
+    <li /><a href="semantics.html">Informal Semantics</a>
+  </ul>
+
+  <h2 id="examples">Example TL13 Program(s)</h2>
+  <ul>
+    <li/><p>Simple Programs</p>
+    <ul>
+      <li/><a href="../samples/simple1.tl13">simple1.tl13</a>
+      <li/><a href="../samples/simple2.tl13">simple2.tl13</a>
+    </ul>
+    <li/><p>"Real" Programs</p>
+    <ul>
+      <li/><a href="../samples/sqrt.tl13">sqrt.tl13</a>
+       (<a href="../samples/Sqrt.java">equivalent Java program</a>,
+       <a href="../samples/sqrt-inout.txt">program test inputs/outputs</a>)
+      <li/><a href="../samples/factorize.tl13">factorize.tl13</a>
+       (<a href="../samples/Factorize.java">equivalent Java program</a>,
+       <a href="../samples/factorize-inout.txt">program test inputs/outputs</a>)
+      <li/><a href="../samples/fibonacci.tl13">fibonacci.tl13</a>
+       (<a href="../samples/Fibonacci.java">equivalent Java program</a>,
+       <a href="../samples/fibonacci-inout.txt">program test inputs/outputs</a>)
+      <li/><a href="../samples/euclid.tl13">euclid.tl13</a>
+       (<a href="../samples/Euclid.java">equivalent Java program</a>,
+       <a href="../samples/euclid-inout.txt">program test inputs/outputs</a>)
+    </ul>
+  </ul>
+
+  <h2>Lexical Features</h2>
+  <p>The TL13 language, is lexically simple.  All lexical items are
+  to be separated by one or more whitespace characters (i.e., spaces, tabs, 
+  and returns).  All identifiers
+  start with an capital letter, and may contain only numbers and capital
+  letters.  All key words are start with lower-case letters or are a symbol.  
+  The symbols "(", ")", ":=", ";", "*", "div", "mod",
+  "+", "-", "=", "!=", "<", "<=", ">", ">=" are used.</p>
+
+  <h2>Data Types</h2>
+  <p>Core TL13 supports 32-bit integers ("int"), booleans ("bool").  Variables
+  are always declared to be of a particular type.
+
+
+  <h2>Operators</h2>
+  TL13 has several infix binary operators that work on either integer
+  operands.  The multiplication "*", division "div", modulus "mod",
+  addition "+", and subtraction "-" produce integer results.
+  The comparison operators (i.e., equals "=", not equal "!=", less than
+  "<", less-than or equal-to "<=", greater than ">", and greater-than
+  or equal-to ">=") all produce boolean results.
+
+  <h2>Control Structures</h2>
+  <p>TL13 is a structured programming language.  The only control structures
+  supported are "if" and "while" statements.  Both take a boolean expression
+  that guards the body of the control structure.  In the case of an "if"
+  statement, the statements after the "then" are executed if the expression
+  is true, and the statements after the "else" (if there is one) are executed
+  if the expression is false.  In the case of the "while" statement,
+  the loop is exited if the expression false; otherwise if the
+  expression is true, the body will be executed, and then the expression
+  will be re-evaluated.</p>
+
+  <h2>Assignment</h2>
+  Assignments are a kind of statement rather than a kind of operator.
+  The ":=" keyword is used to separate the left hand side (which is
+  the variable being assigned to) from the right hand 
+  side, which is an expression that must be of the same type as the
+  left hand side.
+
+  <h2>Built-in Procedures</h2>
+  <p>Core TL13 does not support user-defined functions or procedures, but it
+  does support one built-in procedures "writeInt" that
+  outputs an integer and a new-line to the console (respectively), and
+  one user-defined function, "readInt" that reads an integer 
+  from the console.  The syntax for these is hard-coded into TL13's
+  BNF grammar.
+
+  <p>You are encouraged to post additional TL13 programs (or not-quite
+    TL13 programs) to the Piazza forum.</p>
+
+  <h2>Errata/Clarifications</h2>
+  <ul>
+  </ul>
+
+<div id="footer">
+  CS 5363<br />  
+  <a href="http://www.cs.utsa.edu/~vonronne">Jeffery von Ronne</a><br />
+  <a href="http://www.cs.utsa.edu/">Department of Computer Science</a><br />
+  <a href="http://www.utsa.edu/">The University of Texas at San Antonio</a><br />
+</div>
+</body>
+</html>

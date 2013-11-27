@@ -1,0 +1,348 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>CS 5363, Fall 2013, UTSA, Compiler Project, TL13 Core Compiler</title>
+  <link rel="stylesheet" href="course.css" type="text/css" />
+  <meta http-equiv="cache-control" content="max-age=300">
+</head>
+
+<body>
+<div id="header">
+
+  <h1>CS 5363: Programming Languages and Compilers</h1>
+  The University of Texas at San Antonio<br />
+  Fall Semester, 2013<br />
+</div>
+<hr />
+<div id="body">
+  <h1><a href="index.html">CS 5363: TL13 Compiler Project</a>, Core Compiler</h1>
+
+  <p>For the core compiler project, you will complete a non-optimizing compiler
+    for the TL13 language.  The resulting compiler should translate
+    TL13 source code, producing output at several intermediate stages, into
+    MIPS assembly code executable in the SPIM simulator.</p>
+
+  <p>Make sure you pay attention to the requirements listed under
+    <a="#output">Input/Output specification</a> below.  Programs
+    must comply with those specifications to receive full credit.
+  </p>
+
+  <h3>Recursive Descent Parser</h3>
+  <p>Your first assignment is to write a Scanner and Parser for the TL13
+  language.  A BNF grammar and a list of lexical items for the TL13
+  language is provided.  If you wish, you may use an automated tool,
+  such as lex, to create the code for your scanner, but since everything
+  is separated by whitespace, you may
+  find that for TL13 it is simpler to write an ad-hoc scanner by hand
+  or using standard Java library calls (hint: look at the methods
+  provided by java.lang.String).</p>
+
+  <p>The TL13 language is intended to be LL(1), and you are required to write,
+  "by hand," a <strong>predictive recursive-descent top-down parser</strong>
+  for it.  You may modify the grammar to make it LL(1).
+  Your parser should have one method or function corresponding to
+  each non-terminal in the language's (modified) grammar.</p>
+
+  <p>For a lexically or syntactically invalid program, your scanner or
+  parser should output an appropriate error message.</p>
+
+  <p>
+  For a syntactically valid input program, the your parser should
+  output a <a href="http://www.graphviz.org/">Graphviz DOT file</a>
+  containing either the program's parse tree or the program's AST (as
+  required in the next step).
+  </p>
+
+
+  <h3>Abstract Syntax Tree Generation</h3>
+  <p>You should modify your parser to produce an Abstract Syntax Tree (AST) as
+     a tree data structure in memory. <strong>It is a requirement that you
+     create the abstract syntax tree as a tree data structure in memory.  You
+     will not receive full credit.</strong>
+  </p>
+  
+    <p>Note: you do not want to generate your AST by first generating
+      the parse tree and then deleting nodes.  You want to create
+      the AST directly and inductively during the recursive descent parsing.</p>
+  
+    <p>Hint: If you are using Java, you may find it useful to provide a 
+      <a href="http://objectmentor.com/resources/articles/visitor.pdf">Visitor</a>
+      interface for processing the different subclasses of AST nodes
+      in the in-memroy data structure.  
+      (In this case, one Visitor might be for printing out graphviz nodes
+      for AST Nodes.  Another might be for decorating the AST with types
+      and doing type checking.)  If you are using Scala, you will find
+      that pattern matching provides the same organization, but is much
+      more concise.
+    </p>
+
+  <h3>Type Checking and Type Annotated AST</h3>
+    <p>Once you have generated the AST. The compiler should traverse the
+    AST to find the type of each subexpression and determine whether there
+    are any violations of the <a href="language/types.html">TL13 type 
+    rules</a>.</p>
+
+    <p>Hints:
+    In order to type check the program, you will need to create a symbol
+    table to associate each appearance of a variable with that variables
+    declared type. The best way to do this, is probably to create an entry
+    in a hash table indexed by name and containing information about
+    each declared entity. (For TL13, it is sufficient to just track
+    the name and type of each declared variable.) And then when the AST
+    generation code comes across a variable in a procedure body, it can
+    look that name up in the symbol table and store a pointer/reference
+    to that symbol table entry in the AST node.
+    </p>
+
+  <h3>Three Address Code Generation</h3>
+    <p>The compiler should traverse the abstract syntax tree and 
+    translate the program into basic blocks of three-address ILOC 
+    instructions [Section 5.3.2, Section 5.3.3, and Appendix A of 
+    Cooper] according
+    to the <a href="language/semantics.html">TL13 semantics</a>. You may 
+    add instructions beyond those described in Cooper.  Specifically,
+    you may wish to add mod, readInt, and writeInt instructions. As in the 
+    examples found in Cooper, each basic block
+    should end in a conditional branch or unconditional branch (a.k.a.,
+    jump).  The ILOC code can use an infinite number of virtual registers.
+    </p>
+
+    <p>Hints:</p>
+    <ul>
+    <li> It is suggested that you get the CFG output (see below)
+      working as early as possible to aid in testing and debugging.
+    <li>
+    In order to be able to produce the appropriate CFG output and
+    translate into MIPS assembly code, you will probably want to
+    have a class representing blocks (encapsulating a list of instructions
+    and providing operations to iterate over that list and to access
+    the successor blocks) and also a class representing each instruction
+    with fields for each of the three "addresses" as well as the opcode.
+    </ul>
+   
+
+  <h3>MIPS Assembly Output</h3>
+   <p>As the last step, the "back end" of the compiler should translate 
+   the program into executable MIPS assembly code.  This involves
+   selecting the appropriate MIPS assembly language instructions,
+   modifying the code so that it executes with a finite number of
+   registers, and outputting an ASCII file containing MIPS assembly
+   code that is executable with SPIM.</p>
+
+  <p>The ILOC and MIPS instruction sets are quite similar, and depending on
+  the subset of ILOC which the IR contains, instruction selection may be done 
+  through a simple 1:1 substitution of MIPS instructions for ILOC instructions.
+  (Please refer to <a href="http://www.cs.wisc.edu/~larus/HP_AppA.pdf">Appendix
+  A of Computer Organization and Design: The Hardware/Software Interface</a>
+  for a description of the MIPS Instruction Set Architecture (ISA), the MIPS
+  assembly language, and the SPIM simulator.)
+  It may be necessary, however, to handle some instructions in a slightly
+  more complicated manner.  (For example, the MIPS load-from-memory 
+  instruction takes a "register + a 16 bit constant offset" as its address, and
+  it is not possible to map ILOC's loadAO instruction directly to it.)
+  Note: SPIM provides simulated system calls for printing out characters;
+  you may find the <em>read_int</em>, <em>print_int</em>, and 
+  <em>print_char</em> system calls useful for implementing TL13's
+  <em>readInt</em> and <em>writeInt</em> operations.
+  You may wish to use an instruction selection scheme based on the peephole 
+  optimization to handle these cases.  (Cf. Section 11.4 of Engineering
+  a Compiler, but you can probably simplify the scheme described there.)
+  </p>
+
+  <p>In order to generate executable MIPS code, however, you will have to
+  generate code that uses only those registers available in the MIPS
+  ISA.  Normally this would be done using graph-coloring register allocator 
+  with spilling; implementing this will be an extension.
+  In order to get executable code without a register allocator, you can 
+  add a "dummy register allocator pass" that simply sets aside dedicated 
+  registers for the input and output of each MIPS instruction, and 
+  creates one global variable (in the ".data" segment or as an offset from
+  the frame pointer) for each IR temporary.  You would then place a
+  store instruction to write to that global variable, each time it the
+  temporary is assigned to, and place load instructions to transfer the
+  data back from the global variables into the dedicated registers for
+  each MIPS instruction.  This implementation would be quite inefficient,
+  but it will produce correct code.  See the <a href="#simple1">simple1.s</a> as an example of the output this process 
+  would produce.  (An alternative, which you may
+  also pursue would be to only use a limited set of registers in the 
+  ILOC code and to instead assign a fixed memory location to each
+  variable/temporary and perform loads/stores as appropriate in
+  the ILOC code.)  
+  </p>
+
+  <h2>Input/Output Specification</h2>
+  <p>The compiler program should expect a TL13 input file, 
+  <code><em>&lt;basename&gt;</em>.tl13</code>, to be specified as 
+  command-line argument when it is invoked.  (See language-specific 
+  submission instructions in the <a href="getting-stated.html">getting
+  stated document</a> for details.)
+  </p>
+
+  <p>If the input file is not a syntactically-valid program (i.e., if the 
+  program contains a lexical element that is not a legal token or does 
+  not match the BNF grammar), the compiler should ouptut an error message 
+  to standard error (System.err in Java) containing the text 
+  "SCANNER ERROR", the text "PARSER ERROR", or the text "SYNTAX ERROR".
+  (There is no constraint on which you use.  The intent is that you
+  might want to distinguish between scanner and parser errors or you 
+  might want to just call everything a syntax error.)
+  </p>
+
+  <p>The compiler may optionally, output a parse tree in graphviz dot 
+  format to the file: <code><em>&lt;basename&gt;</em>.pt.dot</code><br />
+  (The output requirements of the "Recursive Descent Parser" item in the 
+  rubric may be satisfied with this parse tree or by an AST meeting the
+  requirements in the next section.)
+  </p>
+
+  <p>If there is no syntax error, the compiler should output an abstract
+  syntax tree in graphviz dot format to the AST output file, 
+  <code><em>&lt;basename&gt;</em>.ast.dot</code>.  The nodes of the abstract
+  syntax tree that serve as the roots of subexpressions whose type is INT
+  should have a fillcolor of <code>"/pastel13/3"</code> (a light green) 
+  and those whose type is BOOL should have a fillcolor of
+  <code>"/pastel13/2"</code> (a light blue).  If there is a type error, the
+  compiler should output an error message to standard error that contains
+  the text "TYPE ERROR" and should also color the AST 
+  node associated with that type error (e.g., the node of an operation whose
+  operands have incorrect types) <code>"/pastel13/1"</code> 
+  (a pink) in the AST output file.
+  </p>
+
+  <p>If there is no syntax or type error, the compiler should also output
+  a control flow graph in graphviz dot format to the file,
+  <code><em>&lt;basename&gt;</em>.iloc.cfg.dot</code>.  The control flow graph
+  should be based on a translation of the original program into an ILOC
+  three-address code.  The nodes in the graph should be the basic blocks
+  of the ILOC program representation.  In the graphviz output, each of 
+  the nodes of the graph should be labeled with the instructions found
+  in that basic block.  (Optionally, one may also create a text file
+  <code><em>&lt;basename&gt;</em>.iloc.txt</code> containing just the iloc
+  instructions, so that they can be evaluated even if the control flow
+  graph output does not work correctly.)
+  </p>
+
+  <p>The final output of the compiler, 
+  <a href="http://www.cs.wisc.edu/~larus/spim.html">SPIM-compatible</a> MIPS 
+  assembly code that faithfully implements the semantics of
+  the original source program, should be written to the file,
+  <code><em>&lt;basename&gt;</em>.s</code>.  
+
+  <p>So for a correct TL13 source program,
+  <code><em>&lt;basename&gt;</em>.tl13</code>, the compiler should produce
+  a Type-annotated Abstract Syntax Tree 
+  (<code><em>&lt;basename&gt;</em>.ast.dot</code>), a control flow graph
+  (<code><em>&lt;basename&gt;</em>.iloc.cfg.dot</code>), and a MIPS assembly
+  code file (<code><em>&lt;basename&gt;</em>.s</code>).  Optionally,
+  it may also produce a parse tree, 
+  <code><em>&lt;basename&gt;</em>.pt.dot</code>.
+
+
+  <h2>Progress at Review Dates</h2>
+  <p>The entire compiler should be complete and operating correctly by
+  the final deadline.  "Rough drafts" of the compiler are due at three
+  intermediate deadlines: "Review 1", "Review 2", and "Review 3".  
+  These deadlines exist to encourage students to make timely progress and to provide
+  an opportunity for the TA and/or instructor to review the code and
+  provide feedback.  To receive full-credt, students should aim to have 
+  at least parsing and parse-tree output completed by "Review I";
+  additionally have AST generation, type checking, and AST output
+  completed by "Review II"; and additionally have ILOC translation
+  and CFG output completed by "Review III".
+  </p>
+
+  <h2>Additional Information</h2>
+  <h3>Grading Criteria</h3>
+  <p>Please refer to the Grading Rubric available in blackboard.
+
+
+  <h3>Submission Mechanics and Packaging</h3>
+  The <a href="getting-started.html">"Getting Started" document</a>
+  contains requirements about how your program should be documented,
+  be able to be built, be able to be invoked, and submitted using
+  git.</p>
+
+  <h2 id="samples">Testing and Sample Inputs and Outputs</h2>
+  <p>You are also required to adequately test your compiler and submit
+  your test cases along with your source code and document the
+  current state of your compiler based on your own testing.  Include
+  both incorrectly-typed programs and correctly-typed programs that
+  exercise all parts of your compiler.</p>
+
+  <p>The following some sample input TL13 programs 
+    and (for some) their corresponding output files.
+    Nota bene: it is not necessary to match the text of the dot files
+    exactly.  It is only necessary to produce dot files that visually
+    complies with the specification above when rendered with graphviz.
+    For MIPS, it is only necessary to produce programs that behave
+    in accordance with the TL13 semantics when executed.
+   <ul>
+     <li/>Programs with Sample Compiler Outputs:
+      <ul>
+      <li id="simple1"><a href="samples/simple1.tl13">simple1.tl13</a>
+          <ul>
+           <li><a href="samples/simple1.pt.dot">simple1.pt.dot</a>
+                (<a href="samples/simple1.pt.dot.png">as PNG</a>)
+           <li><a href="samples/simple1.ast.dot">simple1.ast.dot</a>
+                  (<a href="samples/simple1.ast.dot.png">as PNG</a>)
+           <li><a href="samples/simple1.iloc.cfg.dot">simple1.iloc.cfg.dot</a>
+                  (<a href="samples/simple1.iloc.cfg.dot.png">as PNG</a>)
+           <li><a href="samples/simple1.s">simple1.s</a>
+         </ul>
+      <li><a href="samples/sqrt.tl13">sqrt.tl13</a>
+          <ul>
+           <li><a href="samples/sqrt.pt.dot">sqrt.pt.dot</a>
+                (<a href="samples/sqrt.pt.dot.png">as PNG</a>)
+           <li><a href="samples/sqrt.ast.dot">sqrt.ast.dot</a>
+                  (<a href="samples/sqrt.ast.dot.png">as PNG</a>)
+           <li><a href="samples/sqrt.iloc.cfg.dot">sqrt.iloc.cfg.dot</a>
+                  (<a href="samples/sqrt.iloc.cfg.dot.png">as PNG</a>)
+           <li><a href="samples/sqrt.s">sqrt.s</a>
+         </ul>
+      <li><a href="samples/type-error1.tl13">type-error1.tl13</a>
+         <ul>
+          <li><a href="samples/type-error1.ast.dot">type-error1.ast.dot</a>
+                  (<a href="samples/type-error1.ast.dot.png">as PNG</a>)
+         </ul>
+     </ul>
+  </ul>
+
+  <p>The input file will be specified as a command-line argument.  Output
+  file names should be based on the input command-line argument.
+  Details about how the program will be invoked are contained in the
+  <a href="getting-started.html">"Getting Started" document</a>.
+  </p>
+
+  <h2>Errata/Clarifications</h2>
+
+  <p>There may need to be corrections, clarifications, or other modifications 
+  to these instructions, you are responsible for monitoring the class web 
+  site and listening during lecture for announcements related to this 
+  assignment.</p>
+
+  <ul>
+    <li/>9/23/2013: Included accidentally omitted parse tree outputs.
+    <li/>9/23/2013: Fixed reference to bzr instead of git.  Fixed reference
+       to "two" instead of "three" intermediate deadlines.
+    <li/>10/3/2013: Updated sample MIPS output.
+    <li/>10/21/2013: In the ILOC code your compiler produces, you may make
+       use of additional instructions that you invent yourself as long as 
+       (1) they do not duplicate existing instructions (e.g., if you are doing
+       addition, you should use the existing addition instructions rather than
+       inventing new ones), and (2) you include a documents in your docs 
+       directory describing the syntax and meanining of these additional 
+       instructions.
+    <li/>11/13/2013: Updated sample MIPS output.  Looks like I uploaded the
+       wrong version on 10/3/2013.  This should be more logical.
+  </ul>
+
+<div id="footer">
+  CS 5363<br />  <a href="http://www.cs.utsa.edu/~vonronne">Jeffery von Ronne</a><br />
+  <a href="http://www.cs.utsa.edu/">Department of Computer Science</a><br />
+  <a href="http://www.utsa.edu/">The University of Texas at San Antonio</a><br />
+</div>
+</body>
+</html>

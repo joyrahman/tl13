@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>CS 5363, Fall 2013, UTSA, Compiler Project, TL13 Semantics</title>
+  <link rel="stylesheet" href="course.css" type="text/css" />
+  <meta http-equiv="cache-control" content="max-age=300">
+</head>
+
+<body>
+<div id="header">
+
+  <h1>CS 5363: Programming Languages and Compilers</h1>
+  The University of Texas at San Antonio<br />
+  Fall Semester, 2013<br />
+
+</div>
+<hr />
+
+<div id="body">
+  <h1><a href="overview.html">TL13 Language</a><br/>
+  Informal Semantics</h1>
+  <ul>
+    <li>Only those variables which have been declared can be assigned
+      to or used.
+      <ul>
+      <li>All int variables and array elements are considered to have
+      initial values of "0".
+      <li>All bool variables are considered to have initial values of "false".
+      </ul>
+    <li>All binary operators operate on signed integer operands:
+      <ul>
+      <li>"x * y" results in the product of x and y.
+      <li>"x div y" which results in the integer quotient of x divided by y.
+        The behavior is not defined if y is 0 or 
+        if x is the smallest 32-bit negative integer and y is -1.
+      <li>"x mod y" is the results in the remainder of x divided by y
+        when x is non-negative and y is positive.  Otherwise, the result
+        is undefined.
+      <li>"x + y" results in the sum of x and y.
+      <li>"x - y" is the difference of y subtracted from x.
+      <li>"x = y" is true if x and y are the same, otherwise it is false.
+      <li>"x != y" is false if x and y are the same, otherwise it is true.
+      <li>"x < y" is true if x is less than y, otherwise it is false.
+      <li>"x > y" is true if x is greater than y, otherwise it is false.
+      <li>"x <= y" is true if x is less than or equal to y, otherwise it is false.
+      <li>"x >= y" is true if x is greater than or equal to y, otherwise it is false.
+      <li>Computations should be done using integers using a
+        32-bit 2's complement representation.  Overflowing computations 
+        should simply "wrap around".
+   </ul>
+   <li>"if" statements evaluate their expression, if the expression is true,
+     then the "then-statements" are executed, if it is fales, the
+     "else-statements" are executed.
+   <li>"while" statements first evaluates its expression.  If it is false,
+     execution continues after the end of the "while" statement. If
+     it is true, the statements in the body of the "while" loop are
+     executed.  After they finish executing, the expression is
+     re-evaluated.  As long as the expression is true, the process
+     repeats itself, alternatively evaluating the expression and
+     executing the statements in the body.  Once the expression is false,
+     execution continues after the end of the "while" loop.
+   <li>"writeInt" evaluates its expression and outputs the result to the console
+     and causes the cursor to move to the beginning of the next line.
+   <li>"readInt" reads an integer from the console and updates an integer
+     variable to hold that value.
+  </ul>
+
+
+  <h2>Errata/Clarifications</h2>
+  <ul>
+    <li>10/2/13: Increased the situations under which multiplication and
+      division are undefined.
+  </ul>
+
+<div id="footer">
+  CS 5363<br />  <a href="http://www.cs.utsa.edu/~vonronne">Jeffery von Ronne</a><br />
+  <a href="http://www.cs.utsa.edu/">Department of Computer Science</a><br />
+  <a href="http://www.utsa.edu/">The University of Texas at San Antonio</a><br />
+</div>
+</body>
+</html>

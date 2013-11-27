@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>CS 5363, Fall 2013, UTSA, Compiler Project, TL13 Submission</title>
+  <link rel="stylesheet" href="course.css" type="text/css" />
+  <style>td {padding-right:8pt}</style>
+  <meta http-equiv="cache-control" content="max-age=300">
+</head>
+
+<body>
+<div id="header">
+
+  <h1>CS 5363: Programming Languages and Compilers</h1>
+  The University of Texas at San Antonio<br />
+  Fall Semester, 2013<br />
+</div>
+<hr />
+<div id="body">
+  <h1><a href="index.html">CS 5363: TL13 Compiler Project</a></br>
+    Getting Started and Submission Instructions</h1>
+
+  <ol>
+    <li><a href="#software">Software Tools</a>
+    <li><a href="#git">Submission through GitHub</a>
+    <li><a href="#documentation">Cover Letter and Other Documentation</a>
+    <li><a href="#directories">Required Directory Structure</a>
+    <li><a href="#languages">Implementation-Language Specific Instructions</a>
+    <li><a href="#errata">Errata</a>
+  </ol>
+
+  <h2 id="software">Software</h2>
+  <p>In order to do your assignments you will need to have:
+  </p>
+    <ul>
+      <li>g++ (4.6.3), Java JDK (version 7), Mono (v2.10.8.1), or Scala (2.9.1)
+      <li>a git client
+      <li>graphviz
+      <li>SPIM (v8.0)
+    </ul>
+  <p>You may also find it useful to use an IDE, such as 
+    <a href="http://www.eclipse.org/">Eclipse</a> (perhaps, 
+    with egit and Scala IDE) or MonoDevelop,
+    and an interactive graphviz dot file viewer, such as <a
+    href="http://zvtm.sourceforge.net/zgrviewer.html">zgrviewer</a>
+    or the Zest plugin for Eclipse.
+  </p>
+
+  <p>These can be installed under Linux, OS X, or Windows, but the versions 
+   of this software is included in the virtual machine provided by
+   the instructor.  We will be using the versions of these tools provided 
+   on the virtual machine for grading, and your grade may be reduced if you use
+   newer language features that are not supported by these versions of the tools.  
+   Generally, using older versions than those listed above should not 
+   cause problems. </p>
+
+  <h2 id="git">Git / GitHub</h2>
+
+  <p>Each student has been setup, so that they have access to a private
+    repository within the UTSA-CS-5363-Fall2013 organization on GitHub.
+    At each deadline, you will need to submit your by pushing a
+    branch containing your submission to GitHub.  You must also 
+    submit a cover letter to Blackboard as described 
+    <a href="#documentation">below.</a> 
+  </p>
+
+  <p><strong>This will be most easily accomplished if you set up git to
+    manage your source code when you begin develop it, and push to the
+    repository on GitHub periodically.  If you try to copy your code into 
+    git right before the deadline, you are likely to run into problems
+    and may not get your hard-work turned in on time.</strong></p>
+
+  <p>You should not overwrite (with a forced push) the branch containing
+    your submission on GitHub until your work has been graded.  (You may, 
+    however, continue to use normal appending pushes.)</p>
+
+  <h2 id="documentation">Documentation</h2>
+  Prior to each submission deadline, you should prepare a cover letter
+  that you submit (as text rather than as an attachment) through blackboard.
+
+  Your cover letter should contain:
+  <ol>
+   <li>Your full name.
+   <li>Your myUTSA id.
+   <li>Your GitHub Account Name.
+   <li>The SHA-1 code of the commit you would like to be graded.
+   <li>Which programming language was used to implement the compiler.
+   <li>Approximately how many hours you spent on your compiler 
+       (since the last review date).
+   <li>Grading requests (if applicable).  Indicate if you would like your 
+     parser to be graded using the parse tree (.pt.dot) or AST output (.ast.dot).  
+     Indicate if your CFG is incomplete, and you would like your iloc be graded 
+     based on textual output (.iloc.txt) instead of the ILOC code embedded in the
+     control flow graph (.iloc.cfg.dot).
+   <li>A summary of the current state of a compiler: 
+       <ul>
+         <li>How complete is your compiler? (i.e., Does it produce 
+           parse tree, AST/types, ILOC/CFG, MIPS assembly?  Does 
+           it work for the whole TL13 language or only parts of it?)
+         <li>known bugs (i.e., Does it fail to compile? Does it
+           produce any compiler warnings?  Are there any test 
+           programs that crash the compiler or for which the compiler 
+           produces incorrect output?)
+       </ul>
+   <li>A summary of how you have tested your compiler.
+   <li>Instructions for how to build and run your compiler
+     (Regardless of what you put here, the language-specific 
+     requirements below apply.).
+   <li>List any resources that you used in completing this assignment 
+     besides the instructor, TA, the course text books, and the class 
+     piazza forum.
+   <li>The statement that "This submission is my own work. I did not look
+     at any one else's compiler code.  All resources used have been fully 
+     disclosed above." unless this statement is untrue, in which
+     case you must completely disclose the extent to which the work is
+     not your independent submission and request an appointment with the
+     instructor to discuss the situation.
+   <li>The statement that "I have not and will not share this code with
+     other 5363 students." unless this statement is untrue,
+     in which case you must completely disclose the extent to which you
+     showed your code to others and request an appointment with the instructor
+     to discuss the situation.
+  </ol>
+
+  <h2 id="directories">Directory Tree</h2>
+  <p>In order for the instructor and TA to efficiently grade the
+  assignments, it is necessary that we place some specific instructions
+  on how your source code and other files are organized in the git commit tree
+  so that we can compile and run that code in an efficient way.  </p>
+
+<pre>
+|
++- .gitignore       [highly recommended, should list specifications for compiler generated files that should be ignored by git]
++- README.md        [optional]
++- warmup           [optional]
++- core
+   |
+   +- .classpath    [eclipse path for compiling files; optional]
+   +- .project      [eclipse project file; optional]
+   +- .settings     [eclipse project settings; optional]
+   +- LANGUAGE.txt
+   +- bin/          [must be empty; optional]
+   +- src/          [source code]
+   +- tests/        [test cases used]
+   +- docs/         [any additional documentation if needed; optional]
+</pre>
+
+  <p>The git commit tree should contain a directory named core:
+  <code>LANGUAGE.txt</code>
+  (that contains a single line with the word "Java",
+  "C++", "Scala", or "Mono" corresponding to your chosen implementation language),
+  a <code>tests</code> directory (containing the TL13 programs you
+  used to test your compiler) and a <code>src</code> directory (containing
+  the source code for your parser).
+  </p>
+
+  <p>You should avoid staging/committing with git all object files, class files, 
+  executables, or your compiler's output files.  (These may reside
+  in your local working directory, but they should not be staged/committed.)
+  Correct this by removing the files with (git rm) and adding the files to
+  .gitignore (or doing the GUI equivalent) as soon as possible.
+  </p>
+
+  <p>Note: git only versions files and not directories.  This means that
+    it will not allow you to stage an empty bin directory.  You may
+    either leave it empty or include a single place-holder file.  (Such 
+    as an empty file .gitkeep file or a .gitignore file containing 
+    "*.class".)</p>
+
+  <h2 id="languages">Additional Build/Invocation/Layout Instructions by Implementation Language</h2>
+
+  <h3>Java</h3>
+  <p>If you are implementing your compiler in Java...
+  </p>
+  <ol>
+    <li>The core/src directory should contain the Java source files in
+      directories matching the Java package.
+    <li>The main method for each phase should be placed in the class 
+      edu.utsa.tl13.Compiler which would be stored in the file
+      under <code>src/edu/utsa/tl13/Compiler.java</code>.
+    <li>From within the <code>core</code> directory of the git checkout
+      your TL13 compiler should be able to be compiled using the command:
+      <code>javac -d bin -sourcepath src src/edu/utsa/tl13/Compiler.java</code>
+    <li>The main method of the Compiler class, should expect a parameter
+      specifying the input TL13 filename (ending in <code>.tl13</code>).  
+      The names of the output files should be automatically derived 
+      from the input file name by extending the base input file name with
+      a new suffix denoting the contents and type as described in the
+      assignment's output specification.
+    <ol>
+      <li>For examples, from within your <code>core</code> directory, you 
+        should be able to use your TL13 compiler to compile the TL13 file 
+        simple.tl13 in the <code>path-to-test-cases</code> directory with 
+        the command:
+      <code>java -classpath bin edu.utsa.tl13.Compiler path-to-test-cases/simple1.tl13</code>
+      <li>In this case, the parser output would be stored in 
+        <code>path-to-test-cases/simple.pt.dot</code> (relative to the 
+        directory from which the command was run).
+    </ol>
+  </ol>
+
+  <h3>C++</h3>
+  <p>If you are implementing your compiler in C++...
+  </p>
+  <ol>
+    <li>The core/src directory should contain the C++ source files
+      (ending in <code>.cc</code> and header files (ending in <code>.hh</code>).
+    <li>From within the core directory,
+      your TL13 compiler should be able to be compiled using the command:
+<pre>
+g++ -o bin/tl13 -Wall `find src -name '*.cc'` -lboost_regex 
+</pre>  
+    <li>The main function, should expect a parameter
+      specifying the input TL13 filename (ending in <code>.tl13</code>).  
+      The names of the output files should be automatically derived 
+      from the input file name by extending the base input file name with
+      a new suffix denoting the contents and type as described in the
+      assignment's output specification.
+    <ol>
+      <li>For examples, you 
+        should be able to use your TL13 compiler to compile the TL13 file 
+        simple.tl13 in the <code>path-to-test-cases</code> directory with the command:
+      <code>bin/tl13 path-to-test-cases/simple.tl13</code>
+      <li>In this case, the parse tree output would be stored in 
+        <code>path-to-test-cases/simple.pt.dot</code>.
+    </ol>
+  </ol>
+
+  <h3>Scala</h3>
+  <p>If you are implementing your compiler in Scala...
+  </p>
+  <ol>
+    <li>The src directory should contain the Scala source files
+      (ending in <code>.scala</code>.
+    <li>From within the core directory,
+      your TL13 compiler should be able to be compiled using the command:
+<pre>
+scalac -d bin `find src -name '*.scala'`
+</pre>  
+    <li>The Compiler should be able to be started using the main method
+      of the edu.utsa.tl13.Compiler class.  This main method should expect a parameter
+      specifying the input TL13 filename (ending in <code>.tl13</code>).  
+      The names of the output files should be automatically derived 
+      from the input file name by extending the base input file name with
+      a new suffix denoting the contents and type as described in the
+      assignment's output specification.
+    <ol>
+      <li>For examples, from within the <code>core</code> directory, you 
+        should be able to use your TL13 compiler to compile the TL13 file 
+        simple.tl13 in the <code>path-to-test-cases</code> directory with 
+        the command:
+      <code>scala -classpath bin edu.utsa.tl13.Compiler path-to-test-cases/simple.tl13</code>
+      <li>In this case, the parse tree output would be stored in 
+        <code>path-to-test-cases/simple.pt.dot</code>.
+    </ol>
+  </ol>
+
+  <h3>C# (Mono)  [Experimental--Instructions subject to revision.]</h3>
+  <p>If you are implementing your compiler in C#...
+  <ol>
+    <li>It must compile and run under Mono v2.10.8.1 using dmcs (which targets mscorelib 4.0).
+    <li>The src directory should contain the C# source files
+      (ending in <code>.cs</code>).
+    <li>From within the core directory,
+      your TL13 compiler should be able to be compiled using the command:
+<pre>
+dmcs -o:bin/tl13.exe -main:utsa.tl13.Compiler `find src -name '*.cs'`
+</pre>  
+    <li>The Compiler should be able to be started using the main method
+      of the edu.utsa.tl13.Compiler class.  This main method should expect a parameter
+      specifying the input TL13 filename (ending in <code>.tl13</code>).  
+      The names of the output files should be automatically derived 
+      from the input file name by extending the base input file name with
+      a new suffix denoting the contents and type as described in the
+      assignment's output specification.
+    <ol>
+      <li>For examples, from within the <code>core</code> directory, you 
+        should be able to use your TL13 compiler to compile the TL13 file 
+        simple.tl13 in the <code>path-to-test-cases</code> directory with 
+        the command:
+      <code>mono bin/tl13.exe path-to-test-cases/simple.tl13</code>
+      <li>In this case, the parse tree output would be stored in 
+        <code>path-to-test-cases/simple.pt.dot</code>.
+    </ol>
+  </ol>
+  
+
+  <h2 id="errata">Errata/Clarifications</h2>
+
+  <p>There may need to be corrections, clarifications, or other modifications 
+  to these instructions, you are responsible for monitoring the class web 
+  site and listening during lecture for announcements related to this 
+  assignment.</p>
+
+  <ul>
+    <li/>9/24/2013: Added request for number of hours spent to the list of
+      items that should be included in the cover letter.
+    <li/>10/4/2013: git doesn't version empty directories.  Marked "bin"
+      as optional and allowed inclusion of a placeholder file in "bin".
+  </ul>
+</div>
+<div id="footer">
+  CS 5363</a><br />  <a href="http://www.cs.utsa.edu/~vonronne">Jeffery von Ronne</a><br />
+  <a href="http://www.cs.utsa.edu/">Department of Computer Science</a><br />
+  <a href="http://www.utsa.edu/">The University of Texas at San Antonio</a><br />
+</div>
+</body>
+</html>
